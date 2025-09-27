@@ -1,0 +1,82 @@
+name: ket
+description: "Kırıkkale University Economic Community Phone Mobile Application."
+publish_to: 'none'
+version: 6.0.0+1
+
+environment:
+  sdk: ^3.6.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons:
+  http:
+  shared_preferences:
+  provider:
+  url_launcher:
+  firebase_core:
+  firebase_auth:
+  google_sign_in: ^6.1.5
+  cloud_firestore:
+  firebase_messaging:
+  permission_handler:
+  firebase_database:
+  crypto:
+  path_provider:
+  pdf:
+  open_file:
+  package_info_plus:
+  intl:
+  flutter_email_sender:
+  intl_translation:
+  flutter_launcher_icons:
+  image_picker:
+  share_plus:
+  image_cropper:
+  flutter_animate:
+  workmanager:
+  flutter_local_notifications:
+  flutter_login:
+  path: ^1.9.1
+  syncfusion_flutter_charts: ^26.1.35
+  flutter_screenutil: ^5.9.3
+  in_app_update: ^4.2.3
+  flutter_tts: ^4.0.2
+  speech_to_text: ^7.0.0
+  audio_waveforms: ^1.0.5
+  audioplayers: ^6.1.0
+  flutter_dotenv: ^5.1.0
+
+  
+  
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Görsel tanımlaması
+  assets:
+    - assets/images/icon_logo.png
+    - assets/images/kkulogo.png
+    - assets/images/ekoslogo.png
+    - assets/images/instagram.png
+    - assets/images/twitterlogo.png
+    - assets/images/chatgpt.png
+    - assets/images/google_logo.png
+    - assets/images/ketyapayzeka.png
+    - assets/images/grokai.png
+    - assets/mp3/grokai.mp3
+    - .env
+
+
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon_logo.png"
+
