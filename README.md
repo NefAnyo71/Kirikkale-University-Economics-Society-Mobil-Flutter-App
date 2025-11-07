@@ -1,413 +1,413 @@
-# 🎓 EKOS - Kırıkkale Üniversitesi Ekonomi Topluluğu Mobil Uygulaması
+# 🎓 EKOS - Kırıkkale University Economics Community Mobile Application
 
 <div align="center">
   <img src="assets/images/ekoslogo.png" alt="EKOS Logo" width="200"/>
   <br>
-  <strong>Kırıkkale Üniversitesi Ekonomi Topluluğu için geliştirdiğim flutter telefon uygulamam</strong>
+  <strong>Flutter mobile application I developed for Kırıkkale University Economics Community</strong>
 </div>
 
-## 📱 Proje Hakkında
+## 📱 About the Project
 
-KET(kku ekonomi toplululuğu), Kırıkkale Üniversitesi Ekonomi Topluluğu için Flutter ile geliştirilmiş modern bir mobil uygulamadır. Uygulama, topluluk etkinlikleri, güncel ekonomi haberleri, ders notları paylaşımı ve sosyal medya entegrasyonu gibi kapsamlı özellikler sunar.
+KET (KKU Economics Community) is a modern mobile application developed with Flutter for Kırıkkale University Economics Community. The application offers comprehensive features such as community events, current economic news, course notes sharing, and social media integration.
 
-## 🎥 Proje Tanıtım Videosu
+## 🎥 Project Introduction Video
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=3jnqW75B0Bk" target="_blank">
-    <img src="https://img.youtube.com/vi/3jnqW75B0Bk/maxresdefault.jpg" alt="KET Proje Tanıtım Videosu" width="600"/>
+    <img src="https://img.youtube.com/vi/3jnqW75B0Bk/maxresdefault.jpg" alt="KET Project Introduction Video" width="600"/>
   </a>
   <br>
-  <strong>📺 <a href="https://www.youtube.com/watch?v=3jnqW75B0Bk">KET Mobil Uygulaması ve Web Sitesi Tanıtım Videosu</a></strong>
+  <strong>📺 <a href="https://www.youtube.com/watch?v=3jnqW75B0Bk">KET Mobile Application and Website Introduction Video</a></strong>
   <br>
-  <em>Projenin detaylı tanıtımı, özellikler ve kullanım rehberi</em>
+  <em>Detailed project introduction, features and usage guide</em>
 </div>
 
 ---
 
-**Sürüm**: 6.8.9
-**Geliştirici**: Arif Özdemir 
-**Platform**: Android (iOS desteği mevcut)  
-**Dil**: Dart/Flutter  
-**Veritabanı**: Firebase Firestore  
+**Version**: 6.8.9
+**Developer**: Arif Özdemir 
+**Platform**: Android (iOS support available)  
+**Language**: Dart/Flutter  
+**Database**: Firebase Firestore  
 **Minimum SDK**: Android API 34 (Android 13)  
-**Hedef SDK**: Android API 36 (Android 16)
+**Target SDK**: Android API 36 (Android 16)
 
-## ✨ Özellikler
+## ✨ Features
 
-### 📚 Eğitim ve Akademik
-- **Ders Notu Paylaşım Sistemi**: Üyeler arası ders notu paylaşımı
-- **Ders Notlarım**: Kişisel ders notları yönetimi
-- **Etkinlik Takvimi**: Akademik ve sosyal etkinlik takibi
-- **Yaklaşan Etkinlikler**: Gelecek etkinlikler için bildirimler
+### 📚 Education and Academic
+- **Course Notes Sharing System**: Course notes sharing between members
+- **My Course Notes**: Personal course notes management
+- **Event Calendar**: Academic and social event tracking
+- **Upcoming Events**: Notifications for future events
 
-### 📰 Haber ve İletişim
-- **Topluluk Haberleri**: Güncel topluluk duyuruları
-- **Sosyal Medya Entegrasyonu**: Topluluk sosyal medya hesaplarına erişim
-- **Geri Bildirim Sistemi**: Uygulama ve topluluk hakkında görüş bildirme
-- **Anket Sistemi**: Üye görüşlerini toplama
+### 📰 News and Communication
+- **Community News**: Current community announcements
+- **Social Media Integration**: Access to community social media accounts
+- **Feedback System**: Providing feedback about the application and community
+- **Survey System**: Collecting member opinions
 
-### 💰 Ekonomi ve Finans
-- **Güncel Ekonomi**: Son ekonomik gelişmeler
-- **Canlı Piyasa**: Gerçek zamanlı finansal veriler
-- **Ekonomik Analizler**: Uzman görüşleri ve analizler
+### 💰 Economy and Finance
+- **Current Economy**: Latest economic developments
+- **Live Market**: Real-time financial data
+- **Economic Analysis**: Expert opinions and analysis
 
-### 👥 Topluluk Yönetimi
-- **Üye Kayıt Sistemi**: Yeni üye başvuruları
-- **Üye Profilleri**: Topluluk üyesi bilgileri
-- **Yönetici Paneli**: Topluluk yöneticileri için özel panel
-- **Sponsorlar**: Topluluk sponsorları ve iş birlikleri
+### 👥 Community Management
+- **Member Registration System**: New member applications
+- **Member Profiles**: Community member information
+- **Admin Panel**: Special panel for community administrators
+- **Sponsors**: Community sponsors and partnerships
 
-### 🔔 Bildirim ve Güvenlik
-- **Push Bildirimleri**: Önemli duyurular için anlık bildirimler
-- **Hesap Güvenliği**: Güvenli giriş ve hesap yönetimi
-- **Çevrimdışı Mod**: İnternet bağlantısı olmadan bazı özellikler
-- **Otomatik Güncelleme**: Uygulama güncellemelerini kontrol etme
+### 🔔 Notification and Security
+- **Push Notifications**: Instant notifications for important announcements
+- **Account Security**: Secure login and account management
+- **Offline Mode**: Some features without internet connection
+- **Automatic Update**: Checking application updates
 
-## 🛠️ Teknolojiler
+## 🛠️ Technologies
 
 ### Frontend
-- **Flutter 3.6.1+** - Cross-platform mobil uygulama geliştirme
-- **Dart 3.6.1+** - Programlama dili
-- **Material Design 3** - Modern UI/UX tasarımı
+- **Flutter 3.6.1+** - Cross-platform mobile application development
+- **Dart 3.6.1+** - Programming language
+- **Material Design 3** - Modern UI/UX design
 
-### Backend ve Veritabanı
-- **Firebase Core** - Backend altyapısı
-- **Cloud Firestore** - NoSQL veritabanı
-- **Firebase Authentication** - Kullanıcı kimlik doğrulama
-- **Firebase Messaging** - Push bildirimleri
-- **Firebase Database** - Gerçek zamanlı veritabanı
+### Backend and Database
+- **Firebase Core** - Backend infrastructure
+- **Cloud Firestore** - NoSQL database
+- **Firebase Authentication** - User authentication
+- **Firebase Messaging** - Push notifications
+- **Firebase Database** - Real-time database
 
-### Önemli Paketler
-- **shared_preferences** - Yerel veri depolama
-- **permission_handler** - Sistem izinleri yönetimi
-- **url_launcher** - Harici bağlantılar
-- **image_picker** - Görsel seçimi ve yükleme
-- **syncfusion_flutter_charts** - Grafik ve çizelgeler
-- **workmanager** - Arka plan görevleri
-- **in_app_update** - Uygulama içi güncelleme
-- **flutter_local_notifications** - Yerel bildirimler
-- **http** - HTTP istekleri
-- **intl** - Uluslararasılaştırma ve tarih formatları
-- **share_plus** - İçerik paylaşımı
+### Important Packages
+- **shared_preferences** - Local data storage
+- **permission_handler** - System permissions management
+- **url_launcher** - External links
+- **image_picker** - Image selection and upload
+- **syncfusion_flutter_charts** - Charts and graphs
+- **workmanager** - Background tasks
+- **in_app_update** - In-app update
+- **flutter_local_notifications** - Local notifications
+- **http** - HTTP requests
+- **intl** - Internationalization and date formats
+- **share_plus** - Content sharing
 
-## 📂 Proje Yapısı ve Dart Dosyalarının İşlevleri
+## 📂 Project Structure and Dart Files Functions
 
-### 🏠 Ana Dosyalar
+### 🏠 Main Files
 
-#### `main.dart` - Uygulama Giriş Noktası
-- **İşlev**: Uygulamanın ana giriş noktası ve başlatma işlemleri
-- **Özellikler**:
-  - Firebase başlatma ve yapılandırma
-  - Kullanıcı kimlik doğrulama sistemi
-  - Splash screen ve loading ekranları
-  - Uygulama güncelleme kontrolü
-  - Push bildirim yapılandırması
-  - Workmanager ile arka plan görevleri
-  - Ana sayfa grid menü sistemi
-  - Hesap engelleme kontrolü
+#### `main.dart` - Application Entry Point
+- **Function**: Main entry point and startup operations of the application
+- **Features**:
+  - Firebase initialization and configuration
+  - User authentication system
+  - Splash screen and loading screens
+  - Application update control
+  - Push notification configuration
+  - Background tasks with Workmanager
+  - Main page grid menu system
+  - Account blocking control
 
-#### `firebase_service.dart` - Firebase İşlemleri
-- **İşlev**: Firebase Firestore veritabanı işlemleri
-- **Özellikler**:
-  - Geri bildirim ekleme/çekme
-  - Turnuva başvuru yönetimi
-  - Veritabanı CRUD işlemleri
-  - Hata yönetimi
+#### `firebase_service.dart` - Firebase Operations
+- **Function**: Firebase Firestore database operations
+- **Features**:
+  - Adding/retrieving feedback
+  - Tournament application management
+  - Database CRUD operations
+  - Error management
 
-### 🎯 Özellik Modülleri
+### 🎯 Feature Modules
 
-#### `admin_panel_page.dart` - Yönetici Paneli
-- **İşlev**: Yönetici girişi ve yönetim araçları
-- **Özellikler**:
-  - Güvenli yönetici girişi (kullanıcı adı: kkuekonomi71)
-  - Etkinlik yönetimi
-  - Topluluk haberleri yönetimi
-  - Oylama sistemi yönetimi
-  - Öğrenci veritabanı
-  - Karaliste yönetimi
-  - Yapay zeka puanlama sistemi
-  - Ders notu yönetimi
+#### `admin_panel_page.dart` - Admin Panel
+- **Function**: Admin login and management tools
+- **Features**:
+  - Secure admin login (username: kkuekonomi71)
+  - Event management
+  - Community news management
+  - Voting system management
+  - Student database
+  - Blacklist management
+  - AI scoring system
+  - Course notes management
 
-#### `current_economy.dart` - Güncel Ekonomi Haberleri
-- **İşlev**: Anadolu Ajansı RSS beslemesinden ekonomi haberlerini çekme
-- **Özellikler**:
-  - RSS feed okuma ve parsing
-  - Haber filtreleme sistemi
-  - Karanlık/aydınlık mod
-  - Haber raporlama sistemi
-  - Paylaşım özelliği
-  - Yasal uyarı sistemi
-  - Otomatik haber güncelleme
+#### `current_economy.dart` - Current Economic News
+- **Function**: Fetching economic news from Anadolu Agency RSS feed
+- **Features**:
+  - RSS feed reading and parsing
+  - News filtering system
+  - Dark/light mode
+  - News reporting system
+  - Sharing feature
+  - Legal warning system
+  - Automatic news update
 
-#### `live_market.dart` - Canlı Piyasa Takibi
-- **İşlev**: Kripto para ve hisse senedi fiyatlarını gerçek zamanlı takip
-- **Özellikler**:
-  - CoinGecko API entegrasyonu
-  - Türk hisse senetleri simülasyonu
-  - Favori ekleme sistemi
-  - Fiyat grafikleri (Syncfusion Charts)
-  - Karşılaştırma özelliği
-  - Arama ve filtreleme
-  - Mum grafikleri (Candlestick)
+#### `live_market.dart` - Live Market Tracking
+- **Function**: Real-time tracking of cryptocurrency and stock prices
+- **Features**:
+  - CoinGecko API integration
+  - Turkish stock simulation
+  - Favorites system
+  - Price charts (Syncfusion Charts)
+  - Comparison feature
+  - Search and filtering
+  - Candlestick charts
 
-#### `ders_notlari1.dart` - Ders Notu Paylaşım Sistemi
-- **İşlev**: Öğrenciler arası ders notu paylaşımı
-- **Özellikler**:
-  - Fakülte/bölüm/ders filtreleme
-  - PDF dosya paylaşımı
-  - Beğeni/beğenmeme sistemi
-  - Favori ekleme
-  - İndirme sayacı
-  - Yasal uyarı ve kullanım koşulları
-  - Anonim kullanıcı sistemi
+#### `ders_notlari1.dart` - Course Notes Sharing System
+- **Function**: Course notes sharing between students
+- **Features**:
+  - Faculty/department/course filtering
+  - PDF file sharing
+  - Like/dislike system
+  - Add to favorites
+  - Download counter
+  - Legal warning and terms of use
+  - Anonymous user system
 
-#### `etkinlik_takvimi2.dart` - Etkinlik Takvimi
-- **İşlev**: Topluluk etkinliklerini listeleme
-- **Özellikler**:
-  - Firebase Firestore entegrasyonu
-  - Tarih sıralama
-  - Görsel destekli etkinlik kartları
-  - Gradient arka plan tasarımı
-  - Responsive tasarım
+#### `etkinlik_takvimi2.dart` - Event Calendar
+- **Function**: Listing community events
+- **Features**:
+  - Firebase Firestore integration
+  - Date sorting
+  - Visual supported event cards
+  - Gradient background design
+  - Responsive design
 
-#### `yaklasan_etkinlikler.dart` - Yaklaşan Etkinlikler
-- **İşlev**: Gelecekteki etkinlikleri gösterme ve alarm kurma
-- **Özellikler**:
-  - Kalan süre hesaplama
-  - Alarm kurma sistemi (Samsung ve diğer markalar için)
-  - Intent sistemi ile saat uygulaması entegrasyonu
-  - Gerçek zamanlı güncelleme
+#### `yaklasan_etkinlikler.dart` - Upcoming Events
+- **Function**: Showing future events and setting alarms
+- **Features**:
+  - Remaining time calculation
+  - Alarm setting system (for Samsung and other brands)
+  - Clock app integration with Intent system
+  - Real-time updates
 
-#### `social_media_page.dart` - Sosyal Medya
-- **İşlev**: Topluluk sosyal medya hesaplarına yönlendirme
-- **Özellikler**:
-  - Instagram ve Twitter entegrasyonu
-  - URL launcher ile harici bağlantılar
-  - Responsive kart tasarımı
+#### `social_media_page.dart` - Social Media
+- **Function**: Redirecting to community social media accounts
+- **Features**:
+  - Instagram and Twitter integration
+  - External links with URL launcher
+  - Responsive card design
 
-#### `feedback.dart` - Geri Bildirim Sistemi
-- **İşlev**: Kullanıcı geri bildirimlerini toplama
-- **Özellikler**:
-  - Anonim geri bildirim
-  - Firebase Firestore kayıt
-  - E-posta adresi (isteğe bağlı)
-  - Form validasyonu
+#### `feedback.dart` - Feedback System
+- **Function**: Collecting user feedback
+- **Features**:
+  - Anonymous feedback
+  - Firebase Firestore recording
+  - Email address (optional)
+  - Form validation
 
-#### `poll.dart` - Anket Sistemi
-- **İşlev**: Topluluk anketleri oluşturma ve yönetme
-- **Özellikler**:
-  - Çoktan seçmeli sorular
-  - Açık uçlu sorular
-  - Firebase Firestore kayıt
-  - Anonim anket sistemi
+#### `poll.dart` - Survey System
+- **Function**: Creating and managing community surveys
+- **Features**:
+  - Multiple choice questions
+  - Open-ended questions
+  - Firebase Firestore recording
+  - Anonymous survey system
 
-#### `sponsors_page.dart` - Sponsorlar
-- **İşlev**: Sponsorluk bilgileri ve iletişim
-- **Özellikler**:
-  - E-posta entegrasyonu
-  - Sponsorluk başvuru sistemi
-  - İletişim formu
+#### `sponsors_page.dart` - Sponsors
+- **Function**: Sponsorship information and contact
+- **Features**:
+  - Email integration
+  - Sponsorship application system
+  - Contact form
 
-#### `account_settings_page.dart` - Hesap Ayarları
-- **İşlev**: Kullanıcı hesap yönetimi
-- **Özellikler**:
-  - Şifre değiştirme
-  - Hesap silme/devre dışı bırakma
-  - Bildirim ayarları (sessiz saatler)
-  - Çıkış yapma
-  - Kullanıcı profil bilgileri
+#### `account_settings_page.dart` - Account Settings
+- **Function**: User account management
+- **Features**:
+  - Password change
+  - Account deletion/deactivation
+  - Notification settings (quiet hours)
+  - Logout
+  - User profile information
 
-### 🔧 Servis Dosyaları
+### 🔧 Service Files
 
-#### `notification_service.dart` - Bildirim Servisi
-- **İşlev**: Push bildirim yönetimi ve etkinlik hatırlatmaları
-- **Özellikler**:
+#### `notification_service.dart` - Notification Service
+- **Function**: Push notification management and event reminders
+- **Features**:
   - Flutter Local Notifications
-  - Etkinlik bazlı otomatik bildirimler
-  - 7 gün, 1 gün, 1 saat öncesi hatırlatmalar
-  - Bildirim geçmişi yönetimi
-  - Debug ve test fonksiyonları
+  - Event-based automatic notifications
+  - 7 days, 1 day, 1 hour advance reminders
+  - Notification history management
+  - Debug and test functions
 
-#### `services/local_storage_service.dart` - Yerel Depolama
-- **İşlev**: SharedPreferences ile yerel veri yönetimi
-- **Özellikler**:
-  - Kullanıcı oturum bilgileri
-  - Uygulama ayarları
-  - Önbellek yönetimi
+#### `services/local_storage_service.dart` - Local Storage
+- **Function**: Local data management with SharedPreferences
+- **Features**:
+  - User session information
+  - Application settings
+  - Cache management
 
-### 🔐 Yönetici Modülleri
+### 🔐 Admin Modules
 
-#### `admin_yaklasan_etkinlikler.dart` - Etkinlik Yönetimi (Admin)
-- **İşlev**: Yöneticiler için yaklaşan etkinlik ekleme/düzenleme
-- **Özellikler**:
-  - Etkinlik başlığı, detay ve tarih yönetimi
-  - Görsel URL ekleme
-  - Etkinlik silme ve güncelleme
-  - Firebase Firestore entegrasyonu
-  - Tarih ve saat seçici
+#### `admin_yaklasan_etkinlikler.dart` - Event Management (Admin)
+- **Function**: Adding/editing upcoming events for administrators
+- **Features**:
+  - Event title, detail and date management
+  - Adding image URL
+  - Event deletion and update
+  - Firebase Firestore integration
+  - Date and time picker
 
-#### `admin_survey_page.dart` - Anket Sonuçları Yönetimi
-- **İşlev**: Anket sonuçlarını görüntüleme ve analiz etme
-- **Özellikler**:
-  - Uygulama değerlendirme istatistikleri
-  - Özel bar grafik sistemi
-  - Kullanıcı geri bildirimlerini kategorize etme
-  - Topluluk, uygulama ve etkinlik geri bildirimleri
-  - Gerçek zamanlı veri güncelleme
+#### `admin_survey_page.dart` - Survey Results Management
+- **Function**: Viewing and analyzing survey results
+- **Features**:
+  - Application evaluation statistics
+  - Custom bar chart system
+  - Categorizing user feedback
+  - Community, application and event feedback
+  - Real-time data updates
 
-#### `cleaner_admin_page.dart` - Temizlik Yönetimi
-- **İşlev**: Veritabanı temizleme ve bakım işlemleri
+#### `cleaner_admin_page.dart` - Cleaning Management
+- **Function**: Database cleaning and maintenance operations
 
-#### `Topluluk_Haberleri_Yönetici.dart` - Haber Yönetimi
-- **İşlev**: Topluluk haberlerini ekleme/düzenleme
+#### `Topluluk_Haberleri_Yönetici.dart` - News Management
+- **Function**: Adding/editing community news
 
-#### `BlackList.dart` - Karaliste Yönetimi
-- **İşlev**: Kullanıcı engelleme sistemi
+#### `BlackList.dart` - Blacklist Management
+- **Function**: User blocking system
 
-#### `puanlama_sayfasi.dart` - Yapay Zeka Puanlama
-- **İşlev**: Öğrenci performans değerlendirme sistemi
+#### `puanlama_sayfasi.dart` - AI Scoring
+- **Function**: Student performance evaluation system
 
-### 📊 Veri Modelleri ve Yardımcı Dosyalar
+### 📊 Data Models and Helper Files
 
-#### `ders_notlari1_new.dart` - Gelişmiş Ders Notu Sistemi
-- **İşlev**: Yeni nesil ders notu paylaşım sistemi
-- **Özellikler**:
-  - Kapsamlı yasal uyarı sistemi
-  - Kullanıcı onay mekanizması
-  - Favori ekleme sistemi
-  - Beğeni/beğenmeme sistemi
-  - İndirme sayacı
-  - Anonim kullanıcı desteği
-  - Gelişmiş arama ve filtreleme
+#### `ders_notlari1_new.dart` - Advanced Course Notes System
+- **Function**: Next generation course notes sharing system
+- **Features**:
+  - Comprehensive legal warning system
+  - User approval mechanism
+  - Favorites system
+  - Like/dislike system
+  - Download counter
+  - Anonymous user support
+  - Advanced search and filtering
 
-#### `DersNotlariAdmin1.dart` - Ders Notları Yönetici Paneli
-- **İşlev**: Yöneticiler için ders notu yönetimi
-- **Özellikler**:
-  - Not ekleme/düzenleme/silme
-  - Arama ve filtreleme
-  - Görsel destekli not kartları
-  - Dönem ve sınav türü yönetimi
+#### `DersNotlariAdmin1.dart` - Course Notes Admin Panel
+- **Function**: Course notes management for administrators
+- **Features**:
+  - Note adding/editing/deleting
+  - Search and filtering
+  - Visual supported note cards
+  - Term and exam type management
 
-#### `DersNotlarimPage.dart` - Kişisel Ders Notları
-- **İşlev**: Kullanıcıların kişisel ders notlarını yönetmesi
-- **Özellikler**:
-  - Ders ekleme/silme
-  - Vize ve final fotoğrafları
-  - Yerel depolama sistemi
-  - Görsel yönetimi
+#### `DersNotlarimPage.dart` - Personal Course Notes
+- **Function**: Users managing their personal course notes
+- **Features**:
+  - Course adding/deleting
+  - Midterm and final photos
+  - Local storage system
+  - Image management
 
-#### `uye_kayit_bilgileri.dart` - Üye Kayıt Bilgileri Yönetimi
-- **İşlev**: Kayıtlı üyelerin bilgilerini görüntüleme ve yönetme
-- **Özellikler**:
-  - Kullanıcı arama ve filtreleme sistemi
-  - Sayfalama (pagination) desteği
-  - Kullanıcı hesap durumu yönetimi (aktif/engelli)
-  - Şifre görünürlük kontrolü
-  - Veri dışa aktarma (CSV formatında)
-  - Detaylı kullanıcı profil görüntüleme
-  - Sıralama ve filtreleme seçenekleri
+#### `uye_kayit_bilgileri.dart` - Member Registration Information Management
+- **Function**: Viewing and managing registered members' information
+- **Features**:
+  - User search and filtering system
+  - Pagination support
+  - User account status management (active/disabled)
+  - Password visibility control
+  - Data export (CSV format)
+  - Detailed user profile viewing
+  - Sorting and filtering options
 
-#### `oylama.dart` - Oylama Sistemi
-- **İşlev**: Topluluk oylamaları oluşturma ve yönetme
-- **Özellikler**:
-  - Çoktan seçmeli oylama
-  - Kullanıcı başına tek oy hakkı
-  - Gerçek zamanlı sonuç görüntüleme
-  - Oylama silme yetkisi
-  - SharedPreferences ile oy takibi
+#### `oylama.dart` - Voting System
+- **Function**: Creating and managing community votes
+- **Features**:
+  - Multiple choice voting
+  - One vote per user
+  - Real-time result display
+  - Vote deletion authority
+  - Vote tracking with SharedPreferences
 
-#### `Cerezler.dart` - Site Oturum Takibi
-- **İşlev**: Web sitesi oturum verilerini analiz etme
-- **Özellikler**:
-  - IP adresi takibi
-  - Oturum süresi analizi
-  - Kullanıcı onay durumu
-  - Çıkış takibi
-  - Benzersiz ziyaretçi sayısı
+#### `Cerezler.dart` - Site Session Tracking
+- **Function**: Analyzing website session data
+- **Features**:
+  - IP address tracking
+  - Session duration analysis
+  - User approval status
+  - Exit tracking
+  - Unique visitor count
 
-#### `BasvuruSorgulama.dart` - Başvuru Yönetim Sistemi
-- **İşlev**: Gezi ve etkinlik başvurularını yönetme
-- **Özellikler**:
-  - Başvuru arama ve filtreleme
-  - Ödeme durumu takibi
-  - Başvuru silme (çift onay sistemi)
-  - Gerçek zamanlı başvuru sayısı
-  - Detaylı başvuru bilgileri
+#### `BasvuruSorgulama.dart` - Application Management System
+- **Function**: Managing trip and event applications
+- **Features**:
+  - Application search and filtering
+  - Payment status tracking
+  - Application deletion (double confirmation system)
+  - Real-time application count
+  - Detailed application information
 
-#### `adminFeedBack.dart` - Geri Bildirim Yönetimi
-- **İşlev**: Kullanıcı geri bildirimlerini yönetme
-- **Özellikler**:
-  - Firebase entegrasyonu
-  - Geri bildirim listeleme
-  - Yenileme özelliği
-  - Gradient arka plan tasarımı
+#### `adminFeedBack.dart` - Feedback Management
+- **Function**: Managing user feedback
+- **Features**:
+  - Firebase integration
+  - Feedback listing
+  - Refresh feature
+  - Gradient background design
 
-#### `community_news2_page.dart` - Topluluk Haberleri Görüntüleme
-- **İşlev**: Topluluk haberlerini kullanıcılara gösterme
-- **Özellikler**:
-  - Tarih sıralı haber listeleme
-  - Görsel destekli haberler
-  - Gradient arka plan
-  - Gerçek zamanlı haber güncelleme
+#### `community_news2_page.dart` - Community News Display
+- **Function**: Showing community news to users
+- **Features**:
+  - Date-sorted news listing
+  - Visual supported news
+  - Gradient background
+  - Real-time news updates
 
-#### `uyekayıt.dart` / `uye_kayit.dart` - Üye Kayıt
-- **İşlev**: Yeni üye kayıt işlemleri
+#### `uyekayıt.dart` / `uye_kayit.dart` - Member Registration
+- **Function**: New member registration operations
 
-#### `member_profiles_account.dart` - Üye Profilleri
-- **İşlev**: Üye profil bilgileri yönetimi
+#### `member_profiles_account.dart` - Member Profiles
+- **Function**: Member profile information management
 
-#### `website_applications_page.dart` - Web Başvuruları
-- **İşlev**: İnternet sitesi başvurularını yönetme
+#### `website_applications_page.dart` - Web Applications
+- **Function**: Managing website applications
 
-## 🚀 Kurulum
+## 🚀 Installation
 
-### Gereksinimler
-- Flutter SDK 3.6.1 veya üzeri
-- Dart SDK 3.6.1 veya üzeri
+### Requirements
+- Flutter SDK 3.6.1 or higher
+- Dart SDK 3.6.1 or higher
 - Android Studio / VS Code
-- Java 17 (Android geliştirme için)
+- Java 17 (for Android development)
 - Gradle 8.12
-- Firebase hesabı ve proje yapılandırması
-- Android SDK (API Level 21 veya üzeri)
+- Firebase account and project configuration
+- Android SDK (API Level 21 or higher)
 
-### Adım Adım Kurulum
+### Step by Step Installation
 
-1. **Flutter'ı yükleyin**:
+1. **Install Flutter**:
    ```bash
-   # Flutter'ın yüklü olduğunu kontrol edin
+   # Check if Flutter is installed
    flutter doctor
    ```
 
-2. **Projeyi klonlayın**:
+2. **Clone the project**:
    ```bash
    git clone [repository-url]
    cd ket
    ```
 
-3. **Bağımlılıkları yükleyin**:
+3. **Install dependencies**:
    ```bash
    flutter pub get
    ```
 
-4. **Firebase yapılandırması**:
-   - `android/app/google-services.json` dosyasını ekleyin
-   - Firebase Console'da projenizi yapılandırın
+4. **Firebase configuration**:
+   - Add `android/app/google-services.json` file
+   - Configure your project in Firebase Console
 
-5. **Uygulamayı çalıştırın**:
+5. **Run the application**:
    ```bash
    flutter run
    ```
 
-## 📋 Yapılandırma
+## 📋 Configuration
 
-### Firebase Kurulumu
-1. Firebase Console'da yeni proje oluşturun
-2. Android uygulaması ekleyin (com.example.ekos)
-3. `google-services.json` dosyasını `android/app/` klasörüne yerleştirin
-4. Firebase Authentication, Firestore, Cloud Messaging ve Realtime Database'i etkinleştirin
-5. Güvenlik kurallarını yapılandırın
+### Firebase Setup
+1. Create a new project in Firebase Console
+2. Add Android application (com.example.ekos)
+3. Place `google-services.json` file in `android/app/` folder
+4. Enable Firebase Authentication, Firestore, Cloud Messaging and Realtime Database
+5. Configure security rules
 
-### Gerekli İzinler (Android)
+### Required Permissions (Android)
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -419,260 +419,260 @@ KET(kku ekonomi toplululuğu), Kırıkkale Üniversitesi Ekonomi Topluluğu içi
 <uses-permission android:name="android.permission.WAKE_LOCK" />
 ```
 
-### Uygulama Yapılandırması
-1. `pubspec.yaml` dosyasındaki bağımlılıkları kontrol edin
-2. Firebase yapılandırma dosyalarını yerleştirin
-3. Android imzalama sertifikalarını yapılandırın
-4. Bildirim kanallarını ayarlayın
+### Application Configuration
+1. Check dependencies in `pubspec.yaml` file
+2. Place Firebase configuration files
+3. Configure Android signing certificates
+4. Set up notification channels
 
-## 🔧 Geliştirme Ortamı
+## 🔧 Development Environment
 
-### Debug Modu
+### Debug Mode
 ```bash
 flutter run --debug
 ```
 
-### Release Modu
+### Release Mode
 ```bash
 flutter build apk --release
 ```
 
-### Profil Modu (Performans Analizi)
+### Profile Mode (Performance Analysis)
 ```bash
 flutter run --profile
 ```
 
-## 📱 Uygulama Mimarisi
+## 📱 Application Architecture
 
-### Klasör Yapısı
+### Folder Structure
 ```
 lib/
-├── services/           # Servis katmanı
+├── services/           # Service layer
 │   ├── local_storage_service.dart
 │   └── notification_service.dart
-├── admin/             # Yönetici paneli
-├── pages/             # Ana sayfalar
-├── widgets/           # Yeniden kullanılabilir bileşenler
-└── main.dart          # Uygulama giriş noktası
+├── admin/             # Admin panel
+├── pages/             # Main pages
+├── widgets/           # Reusable components
+└── main.dart          # Application entry point
 ```
 
-### Veri Akışı
-1. **Firebase Firestore**: Ana veritabanı
-2. **SharedPreferences**: Yerel ayarlar
-3. **Firebase Auth**: Kullanıcı kimlik doğrulama
-4. **Firebase Messaging**: Push bildirimleri
+### Data Flow
+1. **Firebase Firestore**: Main database
+2. **SharedPreferences**: Local settings
+3. **Firebase Auth**: User authentication
+4. **Firebase Messaging**: Push notifications
 
-## 🔐 Güvenlik Özellikleri
+## 🔐 Security Features
 
-### Kullanıcı Kimlik Doğrulama
-- Firebase Authentication entegrasyonu
-- Anonim giriş desteği
-- Hesap engelleme sistemi
-- Güvenli şifre yönetimi
+### User Authentication
+- Firebase Authentication integration
+- Anonymous login support
+- Account blocking system
+- Secure password management
 
-### Veri Güvenliği
-- Firestore güvenlik kuralları
-- Kullanıcı verilerinin şifrelenmesi
-- API anahtarlarının güvenli saklanması
-- Yasal uyarı ve kullanım koşulları
+### Data Security
+- Firestore security rules
+- User data encryption
+- Secure storage of API keys
+- Legal warning and terms of use
 
-## 📊 Performans Optimizasyonu
+## 📊 Performance Optimization
 
-### Veritabanı Optimizasyonu
-- Firestore indeksleme
-- Sayfalama (pagination)
-- Gerçek zamanlı dinleyiciler
-- Önbellek yönetimi
+### Database Optimization
+- Firestore indexing
+- Pagination
+- Real-time listeners
+- Cache management
 
-### UI/UX Optimizasyonu
+### UI/UX Optimization
 - Lazy loading
-- Görsel optimizasyonu
-- Responsive tasarım
-- Karanlık/aydınlık mod desteği
+- Image optimization
+- Responsive design
+- Dark/light mode support
 
-## 🧪 Test Etme
+## 🧪 Testing
 
-### Unit Testler
+### Unit Tests
 ```bash
 flutter test
 ```
 
-### Widget Testleri
+### Widget Tests
 ```bash
 flutter test test/widget_test.dart
 ```
 
-### Entegrasyon Testleri
+### Integration Tests
 ```bash
 flutter drive --target=test_driver/app.dart
 ```
 
-## 📈 Analitik ve İzleme
+## 📈 Analytics and Monitoring
 
 ### Firebase Analytics
-- Kullanıcı davranış analizi
-- Ekran görüntüleme istatistikleri
-- Olay takibi
-- Çökme raporları
+- User behavior analysis
+- Screen view statistics
+- Event tracking
+- Crash reports
 
-### Performans İzleme
+### Performance Monitoring
 - Firebase Performance Monitoring
-- Ağ istekleri analizi
-- Uygulama başlatma süreleri
-- Bellek kullanımı
+- Network request analysis
+- Application startup times
+- Memory usage
 
-## 🚀 Dağıtım
+## 🚀 Deployment
 
 ### Google Play Store
-1. Uygulama imzalama
-2. APK/AAB oluşturma
-3. Store listeleme
-4. Sürüm yönetimi
+1. Application signing
+2. APK/AAB creation
+3. Store listing
+4. Version management
 
 ### Firebase App Distribution
-1. Test kullanıcıları ekleme
-2. Beta sürüm dağıtımı
-3. Geri bildirim toplama
+1. Adding test users
+2. Beta version distribution
+3. Feedback collection
 
-## 🔄 Güncelleme Sistemi
+## 🔄 Update System
 
-### Otomatik Güncelleme
+### Automatic Update
 - In-app update API
-- Zorunlu güncelleme kontrolü
-- Kullanıcı bilgilendirme
-- Güncelleme durumu takibi
+- Mandatory update control
+- User notification
+- Update status tracking
 
-## 📞 Destek ve İletişim
+## 📞 Support and Contact
 
-### Geliştirici İletişim
-- **E-posta**: arifkerem71@gmail.com
-- **Topluluk**: Kırıkkale Üniversitesi Ekonomi Topluluğu
+### Developer Contact
+- **Email**: arifkerem71@gmail.com
+- **Community**: Kırıkkale University Economics Community
 
-### Hata Bildirimi
-1. GitHub Issues kullanın
-2. Detaylı hata açıklaması ekleyin
-3. Ekran görüntüleri paylaşın
-4. Cihaz ve sürüm bilgilerini belirtin
+### Bug Report
+1. Use GitHub Issues
+2. Add detailed error description
+3. Share screenshots
+4. Specify device and version information
 
-## 📄 Lisans
+## 📄 License
 
-Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosyasına bakınız.
+This project is licensed under the MIT license. See the `LICENSE` file for details.
 
-## 🙏 Katkıda Bulunanlar
+## 🙏 Contributors
 
-- **Arif Özdemir** - Ana Geliştirici
-- **Kırıkkale Üniversitesi Ekonomi Topluluğu** - Proje Sponsoru
+- **Arif Özdemir** - Main Developer
+- **Kırıkkale University Economics Community** - Project Sponsor
 
-## 📝 Sürüm Geçmişi
+## 📝 Version History
 
-### v6.8.9 (Güncel)
-- Gelişmiş ders notu paylaşım sistemi
-- Yönetici paneli iyileştirmeleri
-- Bildirim sistemi güncellemeleri
-- Performans optimizasyonları
-- Yapayzeka Ket eklendi
+### v6.8.9 (Current)
+- Advanced course notes sharing system
+- Admin panel improvements
+- Notification system updates
+- Performance optimizations
+- AI KET added
 
 ### v5.x.x
-- Temel özellikler
-- Firebase entegrasyonu
-- Kullanıcı arayüzü geliştirmeleri
+- Basic features
+- Firebase integration
+- User interface improvements
 
-## 🤖 KET Yapay Zeka Asistanı
+## 🤖 KET Artificial Intelligence Assistant
 
 <div align="center">
-  <img src="assets/images/ketyapayzeka.png" alt="KET AI Asistan" width="120"/>
+  <img src="assets/images/ketyapayzeka.png" alt="KET AI Assistant" width="120"/>
   <br>
-  <strong>Google Gemini AI ile güçlendirilmiş akıllı topluluk asistanı</strong>
+  <strong>Smart community assistant powered by Google Gemini AI</strong>
 </div>
 
-### 🧠 Yapay Zeka Özellikleri
+### 🧠 Artificial Intelligence Features
 
-#### **💬 Akıllı Sohbet Sistemi**
-- **Google Gemini 1.5 Flash** modeli entegrasyonu
-- **Türkçe dil desteği** ile doğal konuşma
-- **KET bilgi bankası** ile özelleştirilmiş yanıtlar
-- **Bağlamsal anlama** ve akıllı cevap üretme
-- **Firebase database entegrasyonu** collectiondaki verilere yapayzeka erişebiliyor 
+#### **💬 Smart Chat System**
+- **Google Gemini 1.5 Flash** model integration
+- **Turkish language support** with natural conversation
+- **KET knowledge base** with customized responses
+- **Contextual understanding** and smart response generation
+- **Firebase database integration** AI can access data in collections
 
-#### **🎤 Çoklu İletişim Kanalları**
-- **Sesli mesaj gönderme** ve kaydetme
-- **Speech-to-Text** ile sesle soru sorma
-- **Text-to-Speech** ile yanıtları sesli okuma
-- **Görsel analizi** ile fotoğraf gönderme ve açıklama
+#### **🎤 Multi-Communication Channels**
+- **Voice message sending** and recording
+- **Speech-to-Text** for voice questions
+- **Text-to-Speech** for reading responses aloud
+- **Visual analysis** with photo sending and description
 
-#### **📚 Kapsamlı Bilgi Bankası**
-- **500+ topluluk bilgisi** detaylı açıklamalarla
-- **Etkinlik ve organizasyon** bilgileri
-- **Ders notları sistemi** rehberliği
-- **Üyelik ve hesap yönetimi** desteği
-- **Sorun giderme** ve teknik destek
+#### **📚 Comprehensive Knowledge Base**
+- **500+ community information** with detailed explanations
+- **Event and organization** information
+- **Course notes system** guidance
+- **Membership and account management** support
+- **Troubleshooting** and technical support
 
-#### **🎨 Modern Kullanıcı Arayüzü**
-- **Karanlık/Aydınlık mod** desteği
-- **Mesaj kopyalama** ve silme özellikleri
-- **Zaman damgası** ile mesaj geçmişi
-- **Sık sorulan sorular** hızlı erişim
-- **Kullanım sınırları** ile adil kaynak yönetimi
+#### **🎨 Modern User Interface**
+- **Dark/Light mode** support
+- **Message copying** and deletion features
+- **Timestamp** with message history
+- **Frequently asked questions** quick access
+- **Usage limits** with fair resource management
 
-#### **⚡ Performans ve Güvenlik**
-- **Günlük 10 mesaj** sınırı ile kaynak optimizasyonu
-- **5 dakikada 10 mesaj** spam koruması
-- **Chat geçmişi** yerel depolama
-- **API güvenliği** ve hata yönetimi
+#### **⚡ Performance and Security**
+- **Daily 10 messages** limit with resource optimization
+- **10 messages in 5 minutes** spam protection
+- **Chat history** local storage
+- **API security** and error management
 
-### 🚀 KET AI Kullanım Senaryoları
+### 🚀 KET AI Usage Scenarios
 
-#### **📋 Topluluk Bilgileri**
+#### **📋 Community Information**
 ```
-"KET nedir?"
-"Nasıl üye olabilirim?"
-"Etkinlikler ücretsiz mi?"
-"İletişim bilgileri neler?"
-```
-
-#### **📖 Akademik Destek**
-```
-"Ders notları nasıl paylaşılır?"
-"Sertifika nasıl alınır?"
-"Staj imkanları var mı?"
+"What is KET?"
+"How can I become a member?"
+"Are events free?"
+"What are the contact details?"
 ```
 
-#### **🔧 Teknik Destek**
+#### **📖 Academic Support**
 ```
-"Uygulama çalışmıyor"
-"Bildirim alamıyorum"
-"Şifremi unuttum"
+"How to share course notes?"
+"How to get a certificate?"
+"Are there internship opportunities?"
 ```
 
-#### **📊 Görsel Analiz**
-- Ekonomi grafikleri açıklama
-- Ders notu içeriği analizi
-- Etkinlik posterlerini değerlendirme
-- Finansal tabloları yorumlama
+#### **🔧 Technical Support**
+```
+"Application not working"
+"Can't receive notifications"
+"I forgot my password"
+```
 
-### 🎯 AI Asistan Avantajları
+#### **📊 Visual Analysis**
+- Explaining economic charts
+- Course note content analysis
+- Evaluating event posters
+- Interpreting financial tables
 
-- **7/24 Erişilebilirlik**: Her zaman aktif destek
-- **Anında Yanıt**: Hızlı ve doğru bilgi
-- **Kişiselleştirilmiş**: Kullanıcı adıyla özel karşılama
-- **Çok Dilli**: Türkçe odaklı doğal dil işleme
-- **Öğrenebilir**: Sürekli gelişen bilgi bankası
+### 🎯 AI Assistant Advantages
 
-## 🔮 Gelecek Planları
+- **24/7 Accessibility**: Always active support
+- **Instant Response**: Fast and accurate information
+- **Personalized**: Special greeting with username
+- **Multilingual**: Turkish-focused natural language processing
+- **Learnable**: Continuously developing knowledge base
 
-### Yakın Dönem
-- iOS desteği genişletme
-- Çevrimdışı mod iyileştirmeleri
-- Daha fazla dil desteği
-- Gelişmiş analitik
+## 🔮 Future Plans
 
-### Uzun Dönem
-- Web uygulaması geliştirme(Web sitesi muhtemelen aynı kalıcak bir süre daha)
-- **Yapay zeka entegrasyonu** ✅ **TAMAMLANDI**
-- Sosyal özellikler genişletme
-- Mikroservis mimarisi
+### Near Term
+- Expanding iOS support
+- Offline mode improvements
+- More language support
+- Advanced analytics
 
-## 📱 Uygulama Ekran Görüntüleri
+### Long Term
+- Web application development (Website will probably stay the same for a while)
+- **Artificial intelligence integration** ✅ **COMPLETED**
+- Expanding social features
+- Microservice architecture
+
+## 📱 Application Screenshots
 
 <div align="center">
   <img src="https://r.resimlink.com/0BKyUzkbDhF.jpg" width="200"/>
@@ -709,24 +709,34 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
   <img src="https://r.resimlink.com/GOwZu.jpg" width="200"/>
 </div>
 
-## 🎬 Medya ve Kaynaklar
+## 🎬 Media and Resources
 
-### 📺 Video İçerikleri
-- **[Proje Tanıtım Videosu](https://www.youtube.com/watch?v=3jnqW75B0Bk)** - KET mobil uygulaması ve web sitesinin kapsamlı tanıtımı
-- **Özellik Demoları** - Uygulamanın temel özelliklerinin gösterimi
-- **Kurulum Rehberi** - Adım adım kurulum ve yapılandırma
+### 📺 Video Content
+- **[Project Introduction Video](https://www.youtube.com/watch?v=3jnqW75B0Bk)** - Comprehensive introduction of KET mobile application and website
+- **Feature Demos** - Demonstration of the application's main features
+- **Installation Guide** - Step-by-step installation and configuration
 
-### 📚 Dokümantasyon
-- **API Dokümantasyonu** - Firebase ve harici API entegrasyonları
-- **Geliştirici Rehberi** - Kod yapısı ve geliştirme standartları
-- **Kullanıcı Kılavuzu** - Uygulama kullanım rehberi
+### 📚 Documentation
+- **API Documentation** - Firebase and external API integrations
+- **Developer Guide** - Code structure and development standards
+- **User Manual** - Application usage guide
 
 ---
 
-**Not**: Bu README dosyası sürekli güncellenmektedir. En güncel bilgiler için repository'yi takip edin.
+## 🎨 Design Notes
+
+> **Note**: You may notice design differences in some pages of the application. This is because I haven't updated some pages from the old version of the application yet. I plan to completely redesign the entire application from scratch in the future.
+
+## 🔐 Authentication Notes
+
+> **Important**: We are currently experiencing issues with packages like Google Sign-In. Account creation is currently local only. We are working on resolving these authentication issues.
+
+---
+
+**Note**: This README file is continuously updated. Follow the repository for the most current information.
 
 <div align="center">
-  <strong>KET ile ekonomi dünyasında bir adım önde olun! 📈</strong>
+  <strong>Stay one step ahead in the world of economics with KET! 📈</strong>
   <br><br>
   <img src="https://img.shields.io/badge/Flutter-3.6.1+-blue?logo=flutter" alt="Flutter">
   <img src="https://img.shields.io/badge/Dart-3.6.1+-blue?logo=dart" alt="Dart">
@@ -734,8 +744,6 @@ Bu proje MIT lisansı altında lisanslanmıştır. Detaylar için `LICENSE` dosy
   <img src="https://img.shields.io/badge/Version-6.8.9-green" alt="Version">
   <br>
   <a href="https://www.youtube.com/watch?v=3jnqW75B0Bk">
-    <img src="https://img.shields.io/badge/YouTube-Tanıtım_Videosu-red?logo=youtube" alt="YouTube Video">
+    <img src="https://img.shields.io/badge/YouTube-Introduction_Video-red?logo=youtube" alt="YouTube Video">
   </a>
 </div>
-
-
