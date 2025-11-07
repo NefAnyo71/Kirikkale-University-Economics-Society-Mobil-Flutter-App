@@ -3,9 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:workmanager/workmanager.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'feedback.dart';
 import 'current_economy.dart';
 import 'live_market.dart';
@@ -21,217 +21,64 @@ import 'DersNotlarımPage.dart';
 import 'ders_notlari1.dart';
 import 'yaklasan_etkinlikler.dart';
 import 'notification_service.dart';
+import 'background_notification_manager.dart';
 import 'account_settings_page.dart';
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:in_app_update/in_app_update.dart';
 import 'gemini_chat_page.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'weather_service.dart';
+import 'services/app_update_service.dart';
+import 'services/credit_service.dart';
 
-// Bildirimler için bir instance oluşturun
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-// Firestore instance
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-// Weather API constants - wttr.in (ücretsiz, kayıt gerektirmez)
-const String WEATHER_BASE_URL = 'https://wttr.in/Kirikkale';
-const String WEATHER_FORMAT = '?format=j1'; // JSON format
-
-// Weather data model
-class WeatherData {
-  final double temperature;
-  final String description;
-  final String icon;
-
-  WeatherData({
-    required this.temperature,
-    required this.description,
-    required this.icon,
-  });
-
-  factory WeatherData.fromJson(Map<String, dynamic> json) {
-    // wttr.in JSON format
-    final current = json['current_condition'][0];
-    return WeatherData(
-      temperature: double.parse(current['temp_C']),
-      description: current['weatherDesc'][0]['value'],
-      icon: _getIconFromDescription(current['weatherDesc'][0]['value']),
-    );
-  }
-
-  static String _getIconFromDescription(String desc) {
-    final lower = desc.toLowerCase();
-    if (lower.contains('sunny') || lower.contains('clear')) return '01d';
-    if (lower.contains('cloudy')) return '03d';
-    if (lower.contains('rain')) return '10d';
-    if (lower.contains('snow')) return '13d';
-    if (lower.contains('thunder')) return '11d';
-    return '02d';
-  }
-}
-
-// Weather service
-class WeatherService {
-  static Future<WeatherData?> getCurrentWeather() async {
-    try {
-      final url = '$WEATHER_BASE_URL$WEATHER_FORMAT';
-      print('🌤️ wttr.in URL: $url');
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'User-Agent': 'curl/7.68.0'},
-      ).timeout(const Duration(seconds: 10));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final temp = data['current_condition'][0]['temp_C'];
-        print('✅ wttr.in Başarılı: Kırıkkale - ${temp}°C');
-        return WeatherData.fromJson(data);
-      } else {
-        print('❌ wttr.in Error ${response.statusCode}');
-        return _getMockWeatherData();
-      }
-    } catch (e) {
-      print('❌ wttr.in hatası: $e');
-      return _getMockWeatherData();
-    }
-  }
-
-  static WeatherData _getMockWeatherData() {
-    final random = DateTime.now().millisecond;
-    final temp = 15 + (random % 20);
-    final icons = ['01d', '02d', '03d', '04d', '09d', '10d'];
-
-    return WeatherData(
-      temperature: temp.toDouble(),
-      description: 'Clear',
-      icon: icons[random % icons.length],
-    );
-  }
-
-  static IconData getWeatherIcon(String iconCode) {
-    switch (iconCode.substring(0, 2)) {
-      case '01':
-        return Icons.wb_sunny; // clear sky
-      case '02':
-        return Icons.wb_cloudy; // few clouds
-      case '03':
-        return Icons.cloud; // scattered clouds
-      case '04':
-        return Icons.cloud; // broken clouds
-      case '09':
-        return Icons.grain; // shower rain
-      case '10':
-        return Icons.grain; // rain
-      case '11':
-        return Icons.flash_on; // thunderstorm
-      case '13':
-        return Icons.ac_unit; // snow
-      case '50':
-        return Icons.blur_on; // mist
-      default:
-        return Icons.wb_cloudy;
-    }
-  }
-}
-
-// Arka plan görevi için top-level fonksiyon
-@pragma('vm:entry-point')
-void callbackDispatcher() {
-  Workmanager().executeTask((taskName, inputData) {
-    if (taskName == "eventNotificationTask") {
-      // Arka plan görevini burada çalıştırıyoruz
-      NotificationService.checkForEventsAndSendNotification();
-    }
-    return Future.value(true);
-  });
-}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    // .env dosyasında yapayzeka apileri var
     await dotenv.load(fileName: ".env");
     print('✅ Environment variables yüklendi');
 
-    // Firebase başlatma
     await Firebase.initializeApp();
     print('✅ Firebase başlatıldı');
 
-    // Temel başlatma işlemleri
+    await MobileAds.instance.initialize();
+    print('✅ Mobile Ads SDK başlatıldı');
+
     await initializeDateFormatting('tr_TR', null);
     print('✅ Tarih formatı başlatıldı');
 
-    // Ana uygulamayı başlat
-    runApp(const MyApp());
+    runApp(const KetApp());
 
-    // Arka plan işlemlerini başlat (async)
     _initializeBackgroundTasks();
   } catch (error) {
     print('❌ Başlatma hatası: $error');
-    runApp(const ErrorApp());
+    runApp(const KetApp());
   }
 }
 
-// Arka plan görevlerini ayrı fonksiyonda başlat
 Future<void> _initializeBackgroundTasks() async {
   try {
-    // Uygulama güncelleme kontrolü
-    _checkForAppUpdate();
-
-    // İzinleri iste
-    _requestPermissions();
-
-    // FCM Token al
-    _getFCMToken();
-
-    // Workmanager başlat
-    _initializeWorkmanager();
-
+    AppUpdateService.checkForUpdate();
+    _bildirimIzinleri();
+    _fCMTokeniAl();
     print('✅ Arka plan görevleri başlatıldı');
   } catch (e) {
     print('❌ Arka plan görev hatası: $e');
   }
 }
 
-Future<void> _initializeWorkmanager() async {
+Future<void> _bildirimIzinleri() async {
   try {
-    Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
-    print('✅ Workmanager başlatıldı');
-  } catch (e) {
-    print('❌ Workmanager hatası: $e');
-  }
-}
-
-// Uygulama güncelleme kontrolü
-Future<void> _checkForAppUpdate() async {
-  try {
-    final info = await InAppUpdate.checkForUpdate();
-
-    if (info.updateAvailability == UpdateAvailability.updateAvailable) {
-      // Güncelleme mevcut, esnek güncelleme başlat
-      await InAppUpdate.startFlexibleUpdate();
-      // Güncelleme tamamlandığında uygulamayı yeniden başlat
-      await InAppUpdate.completeFlexibleUpdate();
-    }
-  } catch (e) {
-    print('Güncelleme kontrolü sırasında hata: $e');
-  }
-}
-
-Future<void> _requestPermissions() async {
-  try {
-    // Bildirim izni
     PermissionStatus notificationStatus =
         await Permission.notification.request();
     if (notificationStatus.isGranted) {
       print("Bildirim izni verildi!");
     }
 
-    // Depolama izni
     PermissionStatus storageStatus = await Permission.storage.request();
     if (storageStatus.isGranted) {
       print("Depolama izni verildi!");
@@ -241,7 +88,7 @@ Future<void> _requestPermissions() async {
   }
 }
 
-Future<void> _getFCMToken() async {
+Future<void> _fCMTokeniAl() async {
   try {
     String? token = await FirebaseMessaging.instance.getToken();
     print("Firebase Token: $token");
@@ -250,8 +97,7 @@ Future<void> _getFCMToken() async {
   }
 }
 
-// Kullanıcıyı Firestore'a kaydetme fonksiyonu
-Future<void> _saveUserToFirestore(
+Future<void> _kullaniciFirebaseKayit(
     String email, String password, String name, String surname) async {
   try {
     await _firestore.collection('üyelercollection').doc(email).set({
@@ -259,7 +105,7 @@ Future<void> _saveUserToFirestore(
       'password': password,
       'name': name,
       'surname': surname,
-      'hesapEngellendi': 0, // Varsayılan olarak 0 (engellenmemiş)
+      'hesapEngellendi': 0,
       'createdAt': FieldValue.serverTimestamp(),
     });
     print('Kullanıcı Firestore\'a kaydedildi: $email');
@@ -268,16 +114,13 @@ Future<void> _saveUserToFirestore(
   }
 }
 
-// Firestore'dan kullanıcı doğrulama ve hesap durumu kontrolü
-Future<Map<String, dynamic>> _validateUserFromFirestore(
+Future<Map<String, dynamic>> _kullaniciFirebaseKontrol(
     String email, String password) async {
   try {
     final doc =
         await _firestore.collection('üyelercollection').doc(email).get();
     if (doc.exists) {
       final userData = doc.data() as Map<String, dynamic>;
-
-      // Hesap engellenmiş mi kontrol et
       final hesapEngellendi = userData['hesapEngellendi'] ?? 0;
 
       return {
@@ -293,71 +136,8 @@ Future<Map<String, dynamic>> _validateUserFromFirestore(
   }
 }
 
-// Splash Screen Widget
-class SplashScreenApp extends StatelessWidget {
-  const SplashScreenApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        backgroundColor: Colors.deepPurple,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/ekoslogo.png',
-                height: 100.0,
-              ),
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(color: Colors.white),
-              const SizedBox(height: 20),
-              const Text('Ekonomi Topluluğu Güncelleniyor...',
-                  style: TextStyle(color: Colors.white, fontSize: 18)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Hata durumu için Widget
-class ErrorApp extends StatelessWidget {
-  const ErrorApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 20),
-              const Text('Uygulama başlatılamadı',
-                  style: TextStyle(fontSize: 18)),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  // Uygulamayı yeniden başlatmayı dene
-                  main();
-                },
-                child: const Text('Yeniden Dene'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// Hesap Engellendi Sayfası
-class AccountBlockedScreen extends StatelessWidget {
-  const AccountBlockedScreen({super.key});
+class HesapEngellemeEkrani extends StatelessWidget {
+  const HesapEngellemeEkrani({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -407,9 +187,8 @@ class AccountBlockedScreen extends StatelessWidget {
               const SizedBox(height: 30),
               ElevatedButton(
                 onPressed: () {
-                  // Çıkış yap ve login sayfasına dön
                   Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => const SimpleLoginPage(),
+                    builder: (context) => const BasitGirisEkrani(),
                   ));
                 },
                 style: ElevatedButton.styleFrom(
@@ -430,15 +209,14 @@ class AccountBlockedScreen extends StatelessWidget {
   }
 }
 
-// Basit Giriş Sayfası
-class SimpleLoginPage extends StatefulWidget {
-  const SimpleLoginPage({super.key});
+class BasitGirisEkrani extends StatefulWidget {
+  const BasitGirisEkrani({super.key});
 
   @override
-  _SimpleLoginPageState createState() => _SimpleLoginPageState();
+  _GirisSayfasi createState() => _GirisSayfasi();
 }
 
-class _SimpleLoginPageState extends State<SimpleLoginPage> {
+class _GirisSayfasi extends State<BasitGirisEkrani> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -537,7 +315,7 @@ class _SimpleLoginPageState extends State<SimpleLoginPage> {
                 _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ElevatedButton(
-                        onPressed: _isLogin ? _login : _signup,
+                        onPressed: _isLogin ? _giris : _kayit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepPurple,
                           padding: const EdgeInsets.symmetric(vertical: 15),
@@ -572,7 +350,7 @@ class _SimpleLoginPageState extends State<SimpleLoginPage> {
     );
   }
 
-  Future<void> _login() async {
+  Future<void> _giris() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -581,61 +359,54 @@ class _SimpleLoginPageState extends State<SimpleLoginPage> {
       final email = _emailController.text;
       final password = _passwordController.text;
 
-      // Önce Firestore'dan kontrol et
-      final validationResult =
-          await _validateUserFromFirestore(email, password);
+      final validationResult = await _kullaniciFirebaseKontrol(email, password);
 
       if (validationResult['isValid'] == true) {
-        // Hesap engellenmiş mi kontrol et
         final hesapEngellendi = validationResult['hesapEngellendi'] ?? 0;
 
         if (hesapEngellendi == 1) {
-          // Hesap engellenmiş, engelli ekranına yönlendir
           Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => const AccountBlockedScreen(),
+            builder: (context) => const HesapEngellemeEkrani(),
           ));
           return;
         }
-
-        // Firestore'da doğrulandı, yerel storage'a da kaydet
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('email', email);
         await prefs.setString('password', password);
-
-        // Kullanıcı bilgilerini al ve kaydet
         final userData = validationResult['userData'] as Map<String, dynamic>;
         await prefs.setString('name', userData['name'] ?? '');
         await prefs.setString('surname', userData['surname'] ?? '');
 
-        // Giriş başarılı, üye kayıt sayfasına yönlendir
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => UyeKayit(),
-        ));
+        await CreditService.getUserCredits(email);
+        if (mounted) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => const GirisEkranSayfasi(),
+          ));
+        }
       } else {
-        // Firestore'da bulunamadı, eski yöntemle dene
         final prefs = await SharedPreferences.getInstance();
         final storedEmail = prefs.getString('email');
         final storedPassword = prefs.getString('password');
 
         if (email == storedEmail && password == storedPassword) {
-          // Giriş başarılı, üye kayıt sayfasına yönlendir
           Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => UyeKayit(),
+            builder: (context) => const GirisEkranSayfasi(),
           ));
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('E-posta veya şifre hatalı')),
-          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('E-posta veya şifre hatalı')),
+            );
+          }
         }
       }
-
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  Future<void> _signup() async {
+  Future<void> _kayit() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -647,21 +418,21 @@ class _SimpleLoginPageState extends State<SimpleLoginPage> {
       final surname = _surnameController.text;
 
       try {
-        // Firestore'a kaydet
-        await _saveUserToFirestore(email, password, name, surname);
-
-        // Yerel storage'a da kaydet
+        await _kullaniciFirebaseKayit(email, password, name, surname);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('email', email);
         await prefs.setString('password', password);
         await prefs.setString('name', name);
         await prefs.setString('surname', surname);
-        await prefs.setBool('hasSeenUyeKayit', true);
+        await prefs.setBool('hasSeenUyeKayit', false);
 
-        // Kayıt başarılı, üye kayıt sayfasına yönlendir
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => UyeKayit(),
-        ));
+        await CreditService.getUserCredits(email);
+
+        if (mounted) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => const GirisEkranSayfasi(),
+          ));
+        }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Kayıt hatası: $e')),
@@ -675,18 +446,17 @@ class _SimpleLoginPageState extends State<SimpleLoginPage> {
   }
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class KetApp extends StatefulWidget {
+  const KetApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<KetApp> createState() => _KetAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _KetAppState extends State<KetApp> {
   bool _isLoggedIn = false;
   bool _hasSeenUyeKayit = false;
 
-  // Giriş durumunu kontrol et
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final email = prefs.getString('email');
@@ -697,7 +467,6 @@ class _MyAppState extends State<MyApp> {
       _hasSeenUyeKayit = hasSeenUyeKayit;
     });
 
-    // Eğer giriş yapmış ama üye kayıt sayfasını görmemişse
     if (_isLoggedIn && !_hasSeenUyeKayit) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -707,60 +476,21 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  // Bildirim ve workmanager başlatma işlemleri
   @override
   void initState() {
     super.initState();
     _checkLoginStatus();
-    _initializeNotifications();
-    _initializeWorkmanager();
+    _initializeBackgroundServices();
   }
 
-  Future<void> _initializeNotifications() async {
+  Future<void> _initializeBackgroundServices() async {
     try {
-      const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('app_icon');
-      final InitializationSettings initializationSettings =
-          InitializationSettings(
-        android: initializationSettingsAndroid,
-      );
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-
-      FirebaseMessaging.onBackgroundMessage(
-          _firebaseMessagingBackgroundHandler);
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        print('Received message: ${message.notification?.title}');
-      });
+      await BackgroundNotificationManager.initializeNotifications();
+      await BackgroundNotificationManager.initializeWorkmanager();
+      await BackgroundNotificationManager.performInitialNotificationCheck();
+      print('✅ Arka plan servisleri başlatıldı');
     } catch (e) {
-      print('Bildirim başlatma hatası: $e');
-    }
-  }
-
-  void _initializeWorkmanager() {
-    try {
-      Workmanager().initialize(
-        callbackDispatcher,
-        isInDebugMode: true,
-      );
-
-      Workmanager().registerPeriodicTask(
-        "eventNotificationTask",
-        "eventNotificationCheck",
-        frequency: const Duration(minutes: 15),
-        initialDelay: const Duration(seconds: 10),
-        existingWorkPolicy: ExistingPeriodicWorkPolicy.replace,
-        constraints: Constraints(
-          networkType: NetworkType.connected,
-        ),
-      );
-
-      print("✅ Workmanager başlatıldı ve görev kaydedildi");
-
-      Future.delayed(const Duration(seconds: 5), () {
-        NotificationService.checkForEventsAndSendNotification();
-      });
-    } catch (e) {
-      print('❌ Workmanager başlatma hatası: $e');
+      print('❌ Arka plan servis hatası: $e');
     }
   }
 
@@ -773,34 +503,36 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      home: _isLoggedIn ? const MyHomePage() : const SimpleLoginPage(),
+      home: _isLoggedIn ? const GirisEkranSayfasi() : const BasitGirisEkrani(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+class GirisEkranSayfasi extends StatefulWidget {
+  const GirisEkranSayfasi({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<GirisEkranSayfasi> createState() => _GirisEkranSayfasiState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
   String _userName = '';
   String _userSurname = '';
   String _userEmail = '';
   int _eventNotificationCount = 0;
   bool _showKetMessage = false;
   WeatherData? _weatherData;
+  StreamSubscription? _userStatusSubscription;
+  StreamSubscription? _eventsSubscription;
+  StreamSubscription? _notificationCountSubscription;
+  BannerAd? _bannerAd;
+  bool _isBannerAdReady = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData().then((_) {
-      // Veriler yüklendikten sonra, widget ağaca bağlıysa ve isim boş değilse
-      // hoş geldin mesajını göster.
       if (mounted && _userName.isNotEmpty) {
-        // build metodu tamamlandıktan sonra dialog göstermek için callback kullanıyoruz.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _showWelcomeDialog(context);
         });
@@ -808,17 +540,77 @@ class _MyHomePageState extends State<MyHomePage> {
     });
     _loadNotificationCount();
     _listenToNotifications();
+    _YaklasanEtkinlikler();
+    _listenToNotificationCount();
     _loadWeatherData();
+    _BannerReklam();
+  }
+
+  @override
+  void dispose() {
+    _userStatusSubscription?.cancel();
+    _eventsSubscription?.cancel();
+    _notificationCountSubscription?.cancel();
+    _bannerAd?.dispose();
+    super.dispose();
+  }
+
+  void _BannerReklam() {
+    print('🔄 Banner ad yükleniyor...');
+    _bannerAd = BannerAd(
+      adUnitId: 'ca-app-pub-9077319357175271/3312244062',
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          print('✅ Banner ad başarıyla yüklendi!');
+          setState(() {
+            _isBannerAdReady = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          print('❌ Banner ad yüklenemedi: $error');
+          ad.dispose();
+        },
+      ),
+    );
+    _bannerAd?.load();
   }
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
-    // setState çağırmadan önce widget'ın hala ağaçta olduğundan emin ol
     if (!mounted) return;
     setState(() {
       _userName = prefs.getString('name') ?? '';
       _userSurname = prefs.getString('surname') ?? '';
       _userEmail = prefs.getString('email') ?? '';
+    });
+
+    if (_userEmail.isNotEmpty) {
+      _listenForBanStatus();
+    }
+  }
+
+  void _listenForBanStatus() {
+    _userStatusSubscription?.cancel();
+
+    _userStatusSubscription = _firestore
+        .collection('üyelercollection')
+        .doc(_userEmail)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        final userData = snapshot.data() as Map<String, dynamic>;
+        final isBlocked = userData['hesapEngellendi'] == 1;
+
+        if (isBlocked && mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(
+                builder: (context) => const HesapEngellemeEkrani()),
+            (route) => false,
+          );
+        }
+      }
     });
   }
 
@@ -832,43 +624,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _listenToNotifications() {
-    // Foreground mesajları dinle
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('📱 Bildirim geldi: ${message.notification?.title}');
-      print('📱 Data: ${message.data}');
-
-      if (message.data['type'] == 'event' ||
-          message.notification?.title?.contains('Etkinlik') == true ||
-          message.notification?.title?.contains('etkinlik') == true) {
-        print('🔔 Etkinlik bildirimi tespit edildi, sayaç artırılıyor');
+    BackgroundNotificationManager.setupFirebaseMessageListeners(
+      onNotificationCountUpdate: (count) {
         _incrementNotificationCount();
-      }
-    });
-
-    // Background/terminated durumdan gelen mesajları dinle
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('📱 Arka plan bildirim açıldı: ${message.notification?.title}');
-      if (message.data['type'] == 'event' ||
-          message.notification?.title?.contains('Etkinlik') == true ||
-          message.notification?.title?.contains('etkinlik') == true) {
-        _incrementNotificationCount();
-      }
-    });
-
-    // Uygulama kapalıyken gelen mesajları kontrol et
-    FirebaseMessaging.instance
-        .getInitialMessage()
-        .then((RemoteMessage? message) {
-      if (message != null) {
-        print(
-            '📱 Uygulama kapalıyken gelen mesaj: ${message.notification?.title}');
-        if (message.data['type'] == 'event' ||
-            message.notification?.title?.contains('Etkinlik') == true ||
-            message.notification?.title?.contains('etkinlik') == true) {
-          _incrementNotificationCount();
-        }
-      }
-    });
+      },
+    );
   }
 
   Future<void> _incrementNotificationCount() async {
@@ -892,16 +652,80 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void _YaklasanEtkinlikler() {
+    _eventsSubscription = FirebaseFirestore.instance
+        .collection('yaklasan_etkinlikler')
+        .snapshots()
+        .listen((snapshot) {
+      print(
+          '🔔 Etkinlik değişikliği tespit edildi: ${snapshot.docs.length} etkinlik');
+
+      _etkinlikHesaplayicisi(snapshot.docs.length);
+
+      final prefs = SharedPreferences.getInstance();
+      prefs.then((prefs) {
+        final lastEventCount = prefs.getInt('last_event_count') ?? 0;
+        if (snapshot.docs.length > lastEventCount) {
+          print('🎉 Yeni etkinlik eklendi, bildirim gönderiliyor...');
+          Future.delayed(const Duration(seconds: 3), () {
+            NotificationService.checkNewEventsAndNotify();
+          });
+        }
+        prefs.setInt('last_event_count', snapshot.docs.length);
+      });
+    });
+  }
+
+  void _listenToNotificationCount() {
+    _notificationCountSubscription =
+        NotificationService.notificationCountStream.listen((count) {
+      if (mounted) {
+        setState(() {
+          _eventNotificationCount = count;
+        });
+        print('🔔 Bildirim sayacı güncellendi: $count');
+      }
+    });
+  }
+
+  void _etkinlikHesaplayicisi(int eventCount) {
+    if (eventCount > 0 && _eventNotificationCount == 0) {
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _eventNotificationCount = eventCount;
+          });
+        }
+      });
+    }
+  }
+
+  Future<void> _testBildirimiGonder() async {
+    await NotificationService.sendTestNotification();
+    await NotificationService.checkForEventsAndSendNotification();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              '🔔 Test bildirimi gönderildi ve etkinlik kontrolü yapıldı!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   Future<void> _loadWeatherData() async {
-    print('🌤️ Hava durumu yükleniyor...');
+    // print('🌤️ Hava durumu yükleniyor...');
     final weather = await WeatherService.getCurrentWeather();
-    print('🌤️ Hava durumu sonucu: $weather');
+    // print('🌤️ Hava durumu sonucu: $weather');
     if (mounted) {
       setState(() {
         _weatherData = weather;
       });
-      print(
-          '🌤️ Hava durumu state güncellendi: ${_weatherData?.temperature}°C');
+      /*print(
+          '🌤️ Hava durumu state güncellendi: ${_weatherData?.temperature}°C'); */
     }
   }
 
@@ -941,7 +765,6 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
-        // Bu kısım giriş ve çıkış animasyonunu yönetir.
         return ScaleTransition(
           scale: CurvedAnimation(
             parent: animation,
@@ -955,19 +778,17 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     );
 
-    // 2.5 saniye sonra dialog'u otomatik olarak kapat
     Future.delayed(const Duration(milliseconds: 2500), () {
-      // Dialog'u kapatmadan önce hala ekranda olup olmadığını kontrol et
       if (mounted && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
-        // Selamlama bittikten sonra KET mesajını göster
+
         Future.delayed(const Duration(milliseconds: 1000), () {
           if (mounted) {
             setState(() {
               _showKetMessage = true;
             });
             print('KET mesajı gösterildi: $_showKetMessage');
-            // 4 saniye sonra mesajı gizle
+
             Future.delayed(const Duration(seconds: 4), () {
               if (mounted) {
                 setState(() {
@@ -1022,8 +843,12 @@ class _MyHomePageState extends State<MyHomePage> {
         actions: [
           GestureDetector(
             onTap: () {
-              print('🌤️ Hava durumu yenileniyor...');
+              // print('🌤️ Hava durumu yenileniyor...');
               _loadWeatherData();
+            },
+            onLongPress: () async {
+              // print('🔔 Bildirim sistemi kontrolü...');
+              await NotificationService.checkForEventsAndSendNotification();
             },
             child: Container(
               margin: const EdgeInsets.only(right: 8),
@@ -1178,98 +1003,124 @@ class _MyHomePageState extends State<MyHomePage> {
                     Icons.feedback,
                     FeedbackPage(),
                   ),
+                  // arka plan bildirim sistemi test için
+                  //_buildTestNotificationButton(context),
                 ],
               ),
             ),
+            // Banner Ad
+            if (_isBannerAdReady && _bannerAd != null)
+              Container(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
+              ),
           ],
         ),
       ),
-      floatingActionButton: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 60.0),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            SizedBox(
+              width: 80,
+              height: 80,
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
                       builder: (context) => GeminiChatPage(
-                            userName: _userName,
-                            userSurname: _userSurname,
-                            userEmail: _userEmail,
-                          )),
-                );
-              },
-              backgroundColor: Colors.deepPurple.shade700,
-              child: Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/ketyapayzeka.png'),
-                    fit: BoxFit.cover,
+                        userName: _userName,
+                        userSurname: _userSurname,
+                        userEmail: _userEmail,
+                      ),
+                    ),
+                  );
+                },
+                backgroundColor: Colors.transparent,
+                child: Container(
+                  width: 115,
+                  height: 115,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    shape: BoxShape.rectangle,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.deepPurple.shade300,
+                      width: 1,
+                    ),
+                    image: DecorationImage(
+                        image: AssetImage('assets/images/ketyapayzeka.png'),
+                        fit: BoxFit.cover,
+                        alignment: AlignmentGeometry.center),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 9),
+                      ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ),
-          if (_showKetMessage)
-            Positioned(
-              right: 90,
-              bottom: 20,
-              child: Container(
-                width: 200,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border:
-                      Border.all(color: Colors.deepPurple.shade300, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Hoş geldin $_userName!',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple.shade700,
-                        fontSize: 16,
+            if (_showKetMessage)
+              Positioned(
+                right: 90,
+                bottom: 20,
+                child: Container(
+                  width: 200,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border:
+                        Border.all(color: Colors.deepPurple.shade300, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Sana nasıl yardımcı olabilirim?',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 14,
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Hoş geldin $_userName!',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple.shade700,
+                          fontSize: 16,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Üstüme tıkla!',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Sana nasıl yardımcı olabilirim?',
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Üstüme tıkla!',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1320,6 +1171,60 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+
+  // TEST BİLDİRİM BUTONU
+  /* Widget _buildTestNotificationButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () async {
+        await NotificationService.sendNearestEventTestNotification();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🔔 Test bildirimi gönderildi!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.orange.shade300, Colors.red.shade300],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.orange.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+          border: Border.all(color: Colors.orange.shade200, width: 1.0),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.notification_add, size: 45.0, color: Colors.white),
+            const SizedBox(height: 8.0),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                'Test Bildirimi Gönder',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  } */
 
   Widget _buildGridButtonWithBadge(BuildContext context, String title,
       IconData icon, Widget page, int badgeCount, VoidCallback onTap) {
@@ -1399,43 +1304,4 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-}
-
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  print('Handling a background message: ${message.messageId}');
-}
-
-Future<bool> isInSilentHours() async {
-  final prefs = await SharedPreferences.getInstance();
-  final isEnabled = prefs.getBool('silent_hours_enabled') ?? false;
-
-  if (!isEnabled) return false;
-
-  final startTimeStr = prefs.getString('silent_hours_start')?.split(':');
-  final endTimeStr = prefs.getString('silent_hours_end')?.split(':');
-
-  if (startTimeStr == null || endTimeStr == null) return false;
-
-  final now = TimeOfDay.now();
-  final startTime = TimeOfDay(
-    hour: int.parse(startTimeStr[0]),
-    minute: int.parse(startTimeStr[1]),
-  );
-
-  var endTime = TimeOfDay(
-    hour: int.parse(endTimeStr[0]),
-    minute: int.parse(endTimeStr[1]),
-  );
-
-  // Eğer bitiş saati başlangıç saatinden önceyse, ertesi günü işaretle
-  if (endTime.hour < startTime.hour ||
-      (endTime.hour == startTime.hour && endTime.minute <= startTime.minute)) {
-    endTime = TimeOfDay(hour: endTime.hour + 24, minute: endTime.minute);
-  }
-
-  final nowInMinutes = now.hour * 60 + now.minute;
-  final startInMinutes = startTime.hour * 60 + startTime.minute;
-  final endInMinutes = endTime.hour * 60 + endTime.minute;
-
-  return nowInMinutes >= startInMinutes && nowInMinutes < endInMinutes;
 }

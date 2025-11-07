@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'main.dart'; // For SimpleLoginPage
+import 'services/app_update_service.dart';
 
 class AccountSettingsPage extends StatefulWidget {
   final String userName;
@@ -28,7 +29,7 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
 
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const SimpleLoginPage()),
+        MaterialPageRoute(builder: (context) => const BasitGirisEkrani()),
         (Route<dynamic> route) => false,
       );
     }
@@ -417,6 +418,14 @@ class _AccountSettingsPageState extends State<AccountSettingsPage> {
             leading: const Icon(Icons.notifications_off_outlined),
             title: const Text('Bildirim Ayarları (Sessiz Saatler)'),
             onTap: _showNotificationSettings,
+          ),
+          const Divider(),
+          _buildSectionTitle('Uygulama'),
+          ListTile(
+            leading: const Icon(Icons.system_update),
+            title: const Text('Güncelleme Kontrolü'),
+            subtitle: const Text('Yeni sürüm kontrolü yap'),
+            onTap: () => AppUpdateService.manualUpdateCheck(context),
           ),
           const Divider(),
           _buildSectionTitle('Oturum'),

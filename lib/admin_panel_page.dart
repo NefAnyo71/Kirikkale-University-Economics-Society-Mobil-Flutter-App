@@ -16,10 +16,12 @@ import 'uye_kayit_bilgileri.dart';
 import 'admin_logs_viewer_page.dart';
 import 'admin_ai_assistant.dart';
 import 'native_biometric_service.dart';
-import 'nfc_service.dart';
-import 'nfc_admin_management.dart';
-import 'self_nfc_registration.dart';
-
+import 'admin_credit_management.dart';
+import 'admin_user_validation.dart';
+import 'admin_note_approval.dart';
+import 'boluGezisiPageAdmin.dart';
+import 'tanisma_etkinligi_basvurulari_page.dart';
+import 'kapi_gorevlisi_kontrol_page.dart';
 
 class AdminPanelPage extends StatefulWidget {
   const AdminPanelPage({Key? key}) : super(key: key);
@@ -90,21 +92,11 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
   String _errorMessage = '';
   bool _showBiometricOption = false;
   bool _biometricAvailable = false;
-  bool _showNFCOption = false;
-  bool _nfcAvailable = false;
 
   @override
   void initState() {
     super.initState();
     _checkBiometricAvailability();
-    _checkNFCAvailability();
-    _setupAuthorizedAdmins();
-  }
-  
-  Future<void> _setupAuthorizedAdmins() async {
-    // Firebase'e örnek yetkili adminleri ekle (sadece ilk kurulumda çalışır)
-    await NFCService.addAuthorizedAdminToFirebase('12345678901', 'ADMIN USER');
-    await NFCService.addAuthorizedAdminToFirebase('98765432109', 'YÖNETİCİ İKİ');
   }
 
   @override
@@ -117,85 +109,14 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
   Future<void> _checkBiometricAvailability() async {
     final isAvailable = await NativeBiometricService.isBiometricAvailable();
     final isEnabled = await NativeBiometricService.isBiometricEnabled();
-    
+
     print('🔍 Biometric Available: $isAvailable');
     print('🔍 Biometric Enabled: $isEnabled');
-    
+
     if (mounted) {
       setState(() {
         _biometricAvailable = isAvailable;
         _showBiometricOption = isAvailable;
-      });
-    }
-  }
-  
-  Future<void> _checkNFCAvailability() async {
-    final isAvailable = await NFCService.isNFCAvailable();
-    final isEnabled = await NFCService.isNFCEnabled();
-    
-    print('📱 NFC Available: $isAvailable');
-    print('📱 NFC Enabled: $isEnabled');
-    
-    if (mounted) {
-      setState(() {
-        _nfcAvailable = isAvailable;
-        _showNFCOption = isAvailable;
-      });
-    }
-  }
-  
-  Future<void> _authenticateWithNFC() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = '';
-    });
-
-    try {
-      print('📱 NFC kimlik doğrulama başlatılıyor...');
-      
-      if (!await NFCService.isNFCEnabled()) {
-        setState(() {
-          _errorMessage = 'NFC kapalı. Lütfen NFC\'yi aktif edin.';
-          _isLoading = false;
-        });
-        await NFCService.openNFCSettings();
-        return;
-      }
-      
-      final tcData = await NFCService.readTCKimlik();
-      print('📱 TC Kimlik sonucu: $tcData');
-      
-      if (tcData != null && tcData['tcNo']!.isNotEmpty) {
-        final tcNo = tcData['tcNo']!;
-        final isAuthorized = await NFCService.isAuthorizedAdmin(tcNo);
-        
-        if (isAuthorized) {
-          // Son giriş tarihini güncelle
-          await NFCService.updateLastLogin(tcNo);
-          
-          await AdminLoggingService.logLoginAttempt(
-            adminUsername: '${tcData['ad']} ${tcData['soyad']} ($tcNo)',
-            isSuccessful: true,
-          );
-          widget.onLoginSuccess('${tcData['ad']} ${tcData['soyad']}');
-          return;
-        } else {
-          setState(() {
-            _errorMessage = 'Bu TC kimlik numarası yetkili değil: $tcNo';
-            _isLoading = false;
-          });
-        }
-      } else {
-        setState(() {
-          _errorMessage = 'TC Kimlik kartı okunamadı. Kartı cihaza yaklaştırın.';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print('📱 NFC hata: $e');
-      setState(() {
-        _errorMessage = 'NFC okuma hatası: $e';
-        _isLoading = false;
       });
     }
   }
@@ -208,19 +129,19 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
 
     try {
       print('🔐 Biometric authentication başlatılıyor...');
-      final authenticated = await NativeBiometricService.authenticateWithBiometric();
+      final authenticated =
+          await NativeBiometricService.authenticateWithBiometric();
       print('🔐 Biometric sonuç: $authenticated');
-      
+
       if (authenticated) {
-        final credentials = await NativeBiometricService.getSavedAdminCredentials();
+        final credentials =
+            await NativeBiometricService.getSavedAdminCredentials();
         print('🔐 Kaydedilmiş credentials: ${credentials != null}');
-        
+
         if (credentials != null) {
           final isValid = await _validateCredentials(
-            credentials['username']!, 
-            credentials['password']!
-          );
-          
+              credentials['username']!, credentials['password']!);
+
           if (isValid) {
             await AdminLoggingService.logLoginAttempt(
               adminUsername: credentials['username']!,
@@ -238,7 +159,7 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
           return;
         }
       }
-      
+
       setState(() {
         _errorMessage = 'Biometric kimlik doğrulama başarısız';
         _isLoading = false;
@@ -277,10 +198,12 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
       if (mounted) {
         if (isValid) {
           // Başarılı giriş sonrası biometric kaydet
-          if (_biometricAvailable && !await NativeBiometricService.isBiometricEnabled()) {
+          if (_biometricAvailable &&
+              !await NativeBiometricService.isBiometricEnabled()) {
             await _showBiometricSetupDialog(username, password);
           } else {
-            await NativeBiometricService.saveAdminCredentials(username, password);
+            await NativeBiometricService.saveAdminCredentials(
+                username, password);
           }
           widget.onLoginSuccess(username);
         } else {
@@ -301,14 +224,14 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
     }
   }
 
-  Future<void> _showBiometricSetupDialog(String username, String password) async {
+  Future<void> _showBiometricSetupDialog(
+      String username, String password) async {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Biometric Kimlik Doğrulama'),
         content: const Text(
-          'Gelecekteki girişler için parmak izi veya yüz tanıma kullanmak ister misiniz?'
-        ),
+            'Gelecekteki girişler için parmak izi veya yüz tanıma kullanmak ister misiniz?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -441,7 +364,8 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepPurple,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -458,30 +382,13 @@ class __AdminLoginScreenState extends State<_AdminLoginScreen> {
                                 onPressed: _authenticateWithBiometrics,
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: Colors.deepPurple,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
                                 label: const Text('BİOMETRİK GİRİŞ'),
-                              ),
-                            ),
-                          ],
-                          if (_showNFCOption) ...[
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                icon: const Icon(Icons.nfc),
-                                onPressed: _authenticateWithNFC,
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: Colors.green,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                label: const Text('TC KİMLİK NFC GİRİŞ'),
                               ),
                             ),
                           ],
@@ -591,6 +498,12 @@ class _AdminDashboard extends StatelessWidget {
           ),
           _buildAdminButton(
             context,
+            'Not Onay Sistemi',
+            Icons.approval,
+            const AdminNoteApproval(),
+          ),
+          _buildAdminButton(
+            context,
             'Etkinlik Takvimi',
             Icons.calendar_today,
             CleanderAdminPage(),
@@ -615,7 +528,7 @@ class _AdminDashboard extends StatelessWidget {
           ),
           _buildAdminButton(
             context,
-            'Öğrenci Veri Tabanı',
+            'İstanbul gezisi veri tabanı',
             Icons.storage,
             BasvuruSorgulama(),
           ),
@@ -645,6 +558,18 @@ class _AdminDashboard extends StatelessWidget {
           ),
           _buildAdminButton(
             context,
+            'Kredi Yönetim Sistemi',
+            Icons.account_balance_wallet,
+            const AdminCreditManagement(),
+          ),
+          _buildAdminButton(
+            context,
+            'Kullanıcı Doğrulama Sistemi',
+            Icons.verified_user,
+            const AdminUserValidation(),
+          ),
+          _buildAdminButton(
+            context,
             'Anketler ve Geri Bildirimler',
             Icons.poll,
             SurveyPage1(),
@@ -669,19 +594,24 @@ class _AdminDashboard extends StatelessWidget {
           ),
           _buildAdminButton(
             context,
-            'NFC Admin Yönetimi',
-            Icons.nfc,
-            NFCAdminManagement(currentAdminUsername: adminUsername),
+            'Tanışma Etkinliği\n veri tabanı',
+            Icons.group_add,
+            const TanismaEtkinligiBasvurulariPage(),
           ),
           _buildAdminButton(
             context,
-            'Kendi TC\'mi NFC\'ye Ekle',
-            Icons.person_add,
-            SelfNFCRegistration(currentAdminUsername: adminUsername),
+            'Kapı Görevlisi Kontrol\n veri tabanı',
+            Icons.security,
+            const KapiGorevlisiKontrolPage(),
           ),
+          _buildAdminButton(
+            context,
+            'Bolu Gezisi',
+            Icons.storage,
+            const BoluGezisiPage(),
+          )
         ],
       ),
     );
   }
 }
-

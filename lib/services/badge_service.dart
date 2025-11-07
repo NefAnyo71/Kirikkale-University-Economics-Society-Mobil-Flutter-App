@@ -1,166 +1,205 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Badge;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/badge_model.dart' as badge_model;
+import '../models/badge_model.dart';
 
 class BadgeService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  static final List<badge_model.Badge> availableBadges = [
-    badge_model.Badge(
-      id: 'first_like',
-      name: '🎯 İlk Beğeni',
-      description: 'İlk beğenini aldın!',
-      icon: Icons.thumb_up,
-      color: Colors.green,
-      requiredLikes: 1,
-      type: badge_model.BadgeType.likes,
-    ),
-    badge_model.Badge(
-      id: 'popular_note',
-      name: '⭐ Popüler Not',
-      description: '10 beğeni aldın!',
-      icon: Icons.star,
-      color: Colors.orange,
-      requiredLikes: 10,
-      type: badge_model.BadgeType.likes,
-    ),
-    badge_model.Badge(
-      id: 'super_popular',
-      name: '🔥 Süper Popüler',
-      description: '25 beğeni aldın!',
-      icon: Icons.local_fire_department,
-      color: Colors.red,
-      requiredLikes: 25,
-      type: badge_model.BadgeType.likes,
-    ),
-    badge_model.Badge(
-      id: 'legend',
-      name: '👑 Efsane',
-      description: '50 beğeni aldın!',
-      icon: Icons.emoji_events,
-      color: Colors.amber,
-      requiredLikes: 50,
-      type: badge_model.BadgeType.likes,
-    ),
-    badge_model.Badge(
+  // Mevcut rozetler
+  static final List<Badge> _badges = [
+    Badge(
       id: 'first_share',
-      name: '📚 İlk Paylaşım',
-      description: 'İlk notunu paylaştın!',
+      name: 'İlk Paylaşım',
+      description: 'İlk notunu paylaştı',
       icon: Icons.share,
       color: Colors.blue,
+      requirement: 1,
+      type: BadgeType.shares,
       requiredShares: 1,
-      type: badge_model.BadgeType.shares,
     ),
-    badge_model.Badge(
+    Badge(
       id: 'active_sharer',
-      name: '📖 Aktif Paylaşımcı',
-      description: '5 not paylaştın!',
-      icon: Icons.library_books,
-      color: Colors.purple,
+      name: 'Aktif Paylaşımcı',
+      description: '5 not paylaştı',
+      icon: Icons.star,
+      color: Colors.orange,
+      requirement: 5,
+      type: BadgeType.shares,
       requiredShares: 5,
-      type: badge_model.BadgeType.shares,
     ),
-    badge_model.Badge(
-      id: 'note_master',
-      name: '🎓 Not Ustası',
-      description: '10 not paylaştın!',
-      icon: Icons.school,
-      color: Colors.indigo,
+    Badge(
+      id: 'super_sharer',
+      name: 'Süper Paylaşımcı',
+      description: '10 not paylaştı',
+      icon: Icons.stars,
+      color: Colors.purple,
+      requirement: 10,
+      type: BadgeType.shares,
       requiredShares: 10,
-      type: badge_model.BadgeType.shares,
+    ),
+    Badge(
+      id: 'liked_content',
+      name: 'Beğenilen İçerik',
+      description: '50 beğeni aldı',
+      icon: Icons.thumb_up,
+      color: Colors.green,
+      requirement: 50,
+      type: BadgeType.likes,
+      requiredLikes: 50,
+    ),
+    Badge(
+      id: 'popular_creator',
+      name: 'Popüler İçerik Üreticisi',
+      description: '100 beğeni aldı',
+      icon: Icons.favorite,
+      color: Colors.red,
+      requirement: 100,
+      type: BadgeType.likes,
+      requiredLikes: 100,
     ),
   ];
 
-  static Future<void> checkAndAwardBadges(String userEmail) async {
+  // Kullanıcının rozetlerini getir
+  static Future<List<UserBadge>> getUserBadges(String userEmail) async {
     try {
-      final userStats = await getUserStats(userEmail);
-      final currentBadges = await getUserBadges(userEmail);
-      final currentBadgeIds = currentBadges.map((b) => b.badgeId).toList();
-
-      for (badge_model.Badge badge in availableBadges) {
-        if (!currentBadgeIds.contains(badge.id)) {
-          bool shouldAward = false;
-
-          switch (badge.type) {
-            case badge_model.BadgeType.likes:
-              shouldAward = (userStats['totalLikes'] ?? 0) >= badge.requiredLikes;
-              break;
-            case badge_model.BadgeType.shares:
-              shouldAward = (userStats['totalShares'] ?? 0) >= badge.requiredShares;
-              break;
-            case badge_model.BadgeType.special:
-              break;
-          }
-
-          if (shouldAward) {
-            await awardBadge(userEmail, badge.id);
-          }
-        }
-      }
-    } catch (e) {
-      print('Rozet kontrolü hatası: $e');
-    }
-  }
-
-  static Future<Map<String, int>> getUserStats(String userEmail) async {
-    try {
-      final notesQuery = await _firestore
-          .collection('ders_notlari')
-          .where('paylasan_kullanici_email', isEqualTo: userEmail)
+      final snapshot = await _firestore
+          .collection('user_badges')
+          .where('userEmail', isEqualTo: userEmail)
           .get();
 
-      int totalLikes = 0;
-      int totalShares = notesQuery.docs.length;
-
-      for (var doc in notesQuery.docs) {
+      return snapshot.docs.map((doc) {
         final data = doc.data();
-        totalLikes += (data['likes'] ?? 0) as int;
-      }
-
-      return {
-        'totalLikes': totalLikes,
-        'totalShares': totalShares,
-      };
-    } catch (e) {
-      print('Kullanıcı istatistikleri alınırken hata: $e');
-      return {'totalLikes': 0, 'totalShares': 0};
-    }
-  }
-
-  static Future<void> awardBadge(String userEmail, String badgeId) async {
-    try {
-      await _firestore
-          .collection('user_badges')
-          .doc('${userEmail}_$badgeId')
-          .set({
-        'userId': userEmail,
-        'badgeId': badgeId,
-        'earnedDate': FieldValue.serverTimestamp(),
-      });
-    } catch (e) {
-      print('Rozet verme hatası: $e');
-    }
-  }
-
-  static Future<List<badge_model.UserBadge>> getUserBadges(String userEmail) async {
-    try {
-      final query = await _firestore
-          .collection('user_badges')
-          .where('userId', isEqualTo: userEmail)
-          .get();
-
-      return query.docs.map((doc) => badge_model.UserBadge.fromMap(doc.data())).toList();
+        return UserBadge(
+          userEmail: data['userEmail'],
+          badgeId: data['badgeId'],
+          earnedAt: data['earnedAt']?.toDate() ?? DateTime.now(),
+        );
+      }).toList();
     } catch (e) {
       print('Kullanıcı rozetleri alınırken hata: $e');
       return [];
     }
   }
 
-  static badge_model.Badge? getBadgeById(String badgeId) {
+  // Rozet ID'sine göre rozet bilgisini getir
+  static Badge? getBadgeById(String badgeId) {
     try {
-      return availableBadges.firstWhere((badge) => badge.id == badgeId);
+      return _badges.firstWhere((badge) => badge.id == badgeId);
     } catch (e) {
       return null;
+    }
+  }
+
+  // Tüm rozetleri getir
+  static List<Badge> getAllBadges() {
+    return _badges;
+  }
+
+  // Mevcut rozetleri getir (alias)
+  static List<Badge> get availableBadges => _badges;
+
+  // Kullanıcının rozet kazanıp kazanmadığını kontrol et ve ver
+  static Future<void> checkAndAwardBadges(String userEmail) async {
+    try {
+      // Kullanıcının mevcut rozetlerini al
+      final userBadges = await getUserBadges(userEmail);
+      final earnedBadgeIds = userBadges.map((ub) => ub.badgeId).toSet();
+
+      // Kullanıcının istatistiklerini al
+      final stats = await _getUserStats(userEmail);
+
+      // Her rozet için kontrol yap
+      for (final badge in _badges) {
+        if (earnedBadgeIds.contains(badge.id)) continue; // Zaten kazanılmış
+
+        bool shouldAward = false;
+
+        switch (badge.type) {
+          case BadgeType.share:
+          case BadgeType.shares:
+            shouldAward = (stats['totalShares'] ?? 0) >= badge.requirement;
+            break;
+          case BadgeType.like:
+          case BadgeType.likes:
+            shouldAward = (stats['totalLikes'] ?? 0) >= badge.requirement;
+            break;
+          case BadgeType.download:
+            shouldAward = (stats['totalDownloads'] ?? 0) >= badge.requirement;
+            break;
+          case BadgeType.special:
+            // Özel rozetler için ayrı kontrol
+            break;
+        }
+
+        if (shouldAward) {
+          await _awardBadge(userEmail, badge.id);
+        }
+      }
+    } catch (e) {
+      print('Rozet kontrolü yapılırken hata: $e');
+    }
+  }
+
+  // Kullanıcının istatistiklerini al (public method)
+  static Future<Map<String, int>> getUserStats(String userEmail) async {
+    return await _getUserStats(userEmail);
+  }
+
+  // Kullanıcının istatistiklerini al (private method)
+  static Future<Map<String, int>> _getUserStats(String userEmail) async {
+    try {
+      // Paylaşım sayısı
+      final shareCount = await _firestore
+          .collection('ders_notlari')
+          .where('paylasan_kullanici_email', isEqualTo: userEmail)
+          .get();
+
+      // Toplam beğeni sayısı
+      int totalLikes = 0;
+      for (final doc in shareCount.docs) {
+        final data = doc.data();
+        totalLikes += (data['likes'] ?? 0) as int;
+      }
+
+      // Kredi bilgilerinden indirme sayısı
+      final creditDoc = await _firestore
+          .collection('user_credits')
+          .doc(userEmail)
+          .get();
+
+      int totalDownloads = 0;
+      if (creditDoc.exists) {
+        final creditData = creditDoc.data() as Map<String, dynamic>;
+        totalDownloads = creditData['totalDownloads'] ?? 0;
+      }
+
+      return {
+        'totalShares': shareCount.docs.length,
+        'totalLikes': totalLikes,
+        'totalDownloads': totalDownloads,
+      };
+    } catch (e) {
+      print('Kullanıcı istatistikleri alınırken hata: $e');
+      return {
+        'totalShares': 0,
+        'totalLikes': 0,
+        'totalDownloads': 0,
+      };
+    }
+  }
+
+  // Rozet ver
+  static Future<void> _awardBadge(String userEmail, String badgeId) async {
+    try {
+      await _firestore.collection('user_badges').add({
+        'userEmail': userEmail,
+        'badgeId': badgeId,
+        'earnedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('Rozet verildi: $badgeId -> $userEmail');
+    } catch (e) {
+      print('Rozet verilirken hata: $e');
     }
   }
 }

@@ -1,18 +1,27 @@
 // notification_service.dart
+import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+    FlutterLocalNotificationsPlugin();
 
 class NotificationService {
+  // Bildirim sayacındaki değişiklikleri yayınlamak için StreamController
+  static final StreamController<int> _notificationCountController =
+      StreamController<int>.broadcast();
+  static Stream<int> get notificationCountStream =>
+      _notificationCountController.stream;
+
   // DEBUG: Tüm bildirim ayarlarını logla
   static Future<void> debugNotificationSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final allKeys = prefs.getKeys().where((key) => key.startsWith('notified_')).toList();
+      final allKeys =
+          prefs.getKeys().where((key) => key.startsWith('notified_')).toList();
 
       print("📋 Kayıtlı bildirim ayarları:");
       for (var key in allKeys) {
@@ -32,12 +41,22 @@ class NotificationService {
   static Future<void> initializeNotifications() async {
     try {
       const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+          AndroidInitializationSettings('@mipmap/ic_launcher');
 
       final InitializationSettings initializationSettings =
-      InitializationSettings(android: initializationSettingsAndroid);
+          InitializationSettings(android: initializationSettingsAndroid);
 
-      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+      await flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        // Bildirime tıklandığında çalışacak fonksiyon
+        onDidReceiveNotificationResponse: (notificationResponse) async {
+          final String? payload = notificationResponse.payload;
+          if (payload != null && payload.startsWith('http')) {
+            print('🚀 Bildirim payload (URL) alındı: $payload');
+            await launchUrl(Uri.parse(payload));
+          }
+        },
+      );
       print("✅ Bildirimler başarıyla başlatıldı");
     } catch (e) {
       print("❌ Bildirim başlatma hatası: $e");
@@ -46,37 +65,34 @@ class NotificationService {
 
   static Future<void> checkForEventsAndSendNotification() async {
     try {
-      print("\n🔔🔔🔔 BİLDİRİM KONTROLÜ BAŞLADI: ${DateTime.now()} 🔔🔔🔔");
+      print("\n🔔 BİLDİRİM KONTROLÜ BAŞLADI: ${DateTime.now()}");
 
       final now = DateTime.now();
       final collection = FirebaseFirestore.instance.collection('yaklasan_etkinlikler');
+      final prefs = await SharedPreferences.getInstance();
 
-      // ÖNCE: Tüm etkinlikleri debug için göster
-      final allEvents = await collection.orderBy('date', descending: false).get();
-      print("📋 Tüm etkinlikler (${allEvents.docs.length} adet):");
+      // Son kontrol zamanını al
+      final lastCheckTime = prefs.getInt('last_notification_check') ?? 0;
+      final lastCheck = DateTime.fromMillisecondsSinceEpoch(lastCheckTime);
+      final timeSinceLastCheck = now.difference(lastCheck);
 
-      for (var doc in allEvents.docs) {
-        var data = doc.data();
-        var date = data['date'] is Timestamp
-            ? (data['date'] as Timestamp).toDate()
-            : null;
-
-        if (date != null) {
-          final difference = date.difference(now);
-          final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(date);
-          print("   - ${data['title']}: $formattedDate (${difference.inDays}g ${difference.inHours.remainder(24)}s kaldı)");
-        }
+      // Eğer son kontrolden 30 dakika geçmemişse çık (spam önleme)
+      if (timeSinceLastCheck.inMinutes < 30) {
+        print("⏰ Son kontrolden ${timeSinceLastCheck.inMinutes} dakika geçti. Minimum 30 dakika bekleniyor.");
+        return;
       }
 
-      // SONRA: Filtrelenmiş sorgu
+      // Yaklaşan etkinlikleri al
       final querySnapshot = await collection
           .where('date', isGreaterThan: Timestamp.fromDate(now))
           .orderBy('date', descending: false)
           .get();
 
-      print("\n📊 Filtrelenmiş ${querySnapshot.docs.length} yaklaşan etkinlik bulundu");
+      print("📊 ${querySnapshot.docs.length} yaklaşan etkinlik bulundu");
 
-      final prefs = await SharedPreferences.getInstance();
+      // Badge'i etkinlik sayısına göre güncelle
+      await updateBadgeCount(querySnapshot.docs.length);
+
       bool anyNotificationSent = false;
 
       for (var doc in querySnapshot.docs) {
@@ -89,108 +105,96 @@ class NotificationService {
           final difference = date.difference(now);
           final eventId = doc.id;
           final eventTitle = data['title'] ?? 'İsimsiz Etkinlik';
+          final eventDetails = data['details'] ?? 'Detaylar yakında...';
+          final eventUrl = data['url'] as String?;
 
-          final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(date);
           print("\n📅 Etkinlik: $eventTitle");
-          print("   📅 Tarih: $formattedDate");
-          print("   ⏰ Kalan süre: ${difference.inDays}g ${difference.inHours.remainder(24)}s ${difference.inMinutes.remainder(60)}dk");
+          print("   ⏰ Kalan süre: ${difference.inDays}g ${difference.inHours.remainder(24)}s");
 
-          // GENİŞLETİLMİŞ ZAMAN ARALIKLARI (daha esnek)
-          bool shouldNotify7Days = (difference.inHours >= 150 && difference.inHours <= 186); // 6.25-7.75 gün
-          bool shouldNotify1Day = (difference.inHours >= 18 && difference.inHours <= 30);   // 0.75-1.25 gün
-          bool shouldNotify1Hour = (difference.inMinutes >= 50 && difference.inMinutes <= 70); // 50-70 dakika
+          // SADECE 3 KURAL: 7 gün, 2 gün, 2 saat
+          bool shouldNotify7Days = (difference.inDays == 7 && difference.inHours.remainder(24) <= 2);
+          bool shouldNotify2Days = (difference.inDays == 2 && difference.inHours.remainder(24) <= 2);
+          bool shouldNotify2Hours = (difference.inHours == 2 && difference.inMinutes.remainder(60) <= 10);
 
-          print("   🔍 7 gün kontrol: $shouldNotify7Days (150-186 saat)");
-          print("   🔍 1 gün kontrol: $shouldNotify1Day (18-30 saat)");
-          print("   🔍 1 saat kontrol: $shouldNotify1Hour (50-70 dakika)");
-
-          // ✅ DEĞİŞİKLİK: else if yerine BAĞIMSIZ if yapısı
-          // Böylece bir etkinlik hem 7 gün hem 1 gün hem de 1 saat bildirimi alabilir
-
-          // 7 gün kala kontrolü - BAĞIMSIZ
+          // 7 gün kala bildirimi
           if (shouldNotify7Days) {
             final notificationKey = 'notified_7days_$eventId';
             final alreadyNotified = prefs.getBool(notificationKey) ?? false;
 
             if (!alreadyNotified) {
-              print("   ✅✅✅ 7 GÜN BİLDİRİMİ GÖNDERİLİYOR: $eventTitle");
+              print("   ✅ 7 GÜN BİLDİRİMİ GÖNDERİLİYOR: $eventTitle");
               await _showNotification(
                 eventId.hashCode,
-                'Yaklaşan Etkinlik! 🗓️',
-                '$eventTitle etkinliğine 7 gün kaldı. Hazırlıklarınızı yapın!',
+                '🗓️ 7 Gün Kaldı: $eventTitle',
+                'Tarih: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}\n$eventDetails',
+                payload: eventUrl,
               );
               await _incrementNotificationBadge();
               await prefs.setBool(notificationKey, true);
               anyNotificationSent = true;
-            } else {
-              print("   ℹ️  7 gün bildirimi zaten gönderilmiş: $eventTitle");
             }
           }
 
-          // 1 gün kala kontrolü - BAĞIMSIZ
-          if (shouldNotify1Day) {
-            final notificationKey = 'notified_1day_$eventId';
+          // 2 gün kala bildirimi
+          if (shouldNotify2Days) {
+            final notificationKey = 'notified_2days_$eventId';
             final alreadyNotified = prefs.getBool(notificationKey) ?? false;
 
             if (!alreadyNotified) {
-              print("   ✅✅✅ 1 GÜN BİLDİRİMİ GÖNDERİLİYOR: $eventTitle");
+              print("   ✅ 2 GÜN BİLDİRİMİ GÖNDERİLİYOR: $eventTitle");
               await _showNotification(
                 eventId.hashCode + 1,
-                'Etkinlik Yaklaşıyor! ⏰',
-                '$eventTitle etkinliğine sadece 1 gün kaldı. Kaçırmayın!',
+                '⏰ 2 Gün Kaldı: $eventTitle',
+                'Tarih: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}\n$eventDetails',
+                payload: eventUrl,
               );
               await _incrementNotificationBadge();
               await prefs.setBool(notificationKey, true);
               anyNotificationSent = true;
-            } else {
-              print("   ℹ️  1 gün bildirimi zaten gönderilmiş: $eventTitle");
             }
           }
 
-          // 1 saat kala bildirimi - BAĞIMSIZ
-          if (shouldNotify1Hour) {
-            final notificationKey = 'notified_1hour_$eventId';
+          // 2 saat kala bildirimi
+          if (shouldNotify2Hours) {
+            final notificationKey = 'notified_2hours_$eventId';
             final alreadyNotified = prefs.getBool(notificationKey) ?? false;
 
             if (!alreadyNotified) {
-              print("   ✅✅✅ 1 SAAT BİLDİRİMİ GÖNDERİLİYOR: $eventTitle");
+              print("   ✅ 2 SAAT BİLDİRİMİ GÖNDERİLİYOR: $eventTitle");
               await _showNotification(
                 eventId.hashCode + 2,
-                'Etkinlik Başlamak Üzere! 🔥',
-                '$eventTitle etkinliği 1 saat içinde başlayacak.',
+                '🔥 2 Saat Kaldı: $eventTitle',
+                'Tarih: ${DateFormat('dd/MM/yyyy HH:mm').format(date)}\n$eventDetails',
+                payload: eventUrl,
               );
               await _incrementNotificationBadge();
               await prefs.setBool(notificationKey, true);
               anyNotificationSent = true;
-            } else {
-              print("   ℹ️  1 saat bildirimi zaten gönderilmiş: $eventTitle");
             }
-          }
-
-          if (!shouldNotify7Days && !shouldNotify1Day && !shouldNotify1Hour) {
-            print("   ➡️  Bildirim zamanı değil: $eventTitle");
           }
         }
       }
 
-      if (!anyNotificationSent) {
-        print("\nℹ️  Hiçbir etkinlik için bildirim gönderilmedi");
+      // Son kontrol zamanını güncelle
+      await prefs.setInt('last_notification_check', now.millisecondsSinceEpoch);
+
+      if (anyNotificationSent) {
+        print("✅ Bildirim(ler) gönderildi");
+      } else {
+        print("ℹ️ Bildirim gönderilmedi");
       }
 
-      // Debug: Kayıtlı bildirim ayarlarını göster
-      await debugNotificationSettings();
-
-      print("\n✅ Bildirim kontrolü tamamlandı");
-
+      print("✅ Bildirim kontrolü tamamlandı\n");
     } catch (e) {
       print("❌ Bildirim kontrolünde hata: $e");
     }
   }
 
-  static Future<void> _showNotification(int id, String title, String body) async {
+  static Future<void> _showNotification(int id, String title, String body,
+      {String? payload}) async {
     try {
-      const AndroidNotificationDetails androidPlatformChannelSpecifics =
-      AndroidNotificationDetails(
+      final AndroidNotificationDetails androidPlatformChannelSpecifics =
+          AndroidNotificationDetails(
         'event_channel_id',
         'Etkinlik Bildirimleri',
         channelDescription: 'Yaklaşan etkinlikler hakkında bildirimler',
@@ -200,20 +204,19 @@ class NotificationService {
         playSound: true,
         showWhen: true,
         icon: '@mipmap/ic_launcher',
+        styleInformation: BigTextStyleInformation(body), // Uzun metinler için
       );
 
-      const NotificationDetails platformChannelSpecifics =
-      NotificationDetails(android: androidPlatformChannelSpecifics);
+      final NotificationDetails platformChannelSpecifics =
+          NotificationDetails(android: androidPlatformChannelSpecifics);
 
       await flutterLocalNotificationsPlugin.show(
         id,
         title,
         body,
         platformChannelSpecifics,
-        payload: 'event_notification', // Etkinlik bildirimi olduğunu belirt
+        payload: payload, // Tıklama eylemi için URL'yi payload olarak ayarla
       );
-
-
 
       print("📨 Bildirim gönderildi: $title - $body");
     } catch (e) {
@@ -228,26 +231,138 @@ class NotificationService {
       final currentCount = prefs.getInt('event_notification_count') ?? 0;
       final newCount = currentCount + 1;
       await prefs.setInt('event_notification_count', newCount);
+      _notificationCountController.add(newCount); // Stream'e yeni sayacı gönder
       print('🔔 Bildirim sayacı artırıldı: $currentCount → $newCount');
     } catch (e) {
       print('❌ Bildirim sayacı artırma hatası: $e');
     }
   }
 
+  // Yeni etkinlik eklendiğinde otomatik bildirim gönder
+  static Future<void> checkNewEventsAndNotify() async {
+    try {
+      print('🔔 Yeni etkinlik kontrolü başlatılıyor...');
+      
+      final now = DateTime.now();
+      final collection = FirebaseFirestore.instance.collection('yaklasan_etkinlikler');
+      
+      // Gelecekteki etkinlikleri al
+      final querySnapshot = await collection
+          .where('date', isGreaterThan: Timestamp.fromDate(now))
+          .orderBy('date', descending: false)
+          .get();
+      
+      print('📊 ${querySnapshot.docs.length} yaklaşan etkinlik bulundu');
+      
+      if (querySnapshot.docs.isNotEmpty) {
+        // Tüm etkinlikler için bildirim gönder (daha agresif)
+        for (var doc in querySnapshot.docs) {
+          final data = doc.data();
+          final eventTitle = data['title'] ?? 'İsimsiz Etkinlik';
+          final eventDetails = data['details'] ?? 'Detaylar yakında...';
+          final eventDate = (data['date'] as Timestamp).toDate();
+          
+          final difference = eventDate.difference(now);
+          
+          // Eğer etkinlik 30 gün içindeyse bildirim gönder (daha geniş aralık)
+          if (difference.inDays <= 30) {
+            await _showNotification(
+              (doc.id.hashCode + 999999), // Benzersiz ID
+              '🎉 Yeni Etkinlik: $eventTitle',
+              'Tarih: ${DateFormat('dd/MM/yyyy HH:mm').format(eventDate)}\n$eventDetails',
+              payload: data['url'] as String?,
+            );
+            
+            await _incrementNotificationBadge();
+            print('✅ Yeni etkinlik bildirimi gönderildi: $eventTitle');
+            
+            // Bildirimler arasında kısa bekleme
+            await Future.delayed(const Duration(milliseconds: 500));
+          }
+        }
+      }
+    } catch (e) {
+      print('❌ Yeni etkinlik kontrolü hatası: $e');
+    }
+  }
+
+  // Etkinlik sayısına göre badge güncelle
+  static Future<void> updateBadgeCount(int eventCount) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final currentBadge = prefs.getInt('event_notification_count') ?? 0;
+      
+      // Eğer etkinlik varsa ve badge 0 ise, badge'i etkinlik sayısı kadar yap
+      if (eventCount > 0 && currentBadge == 0) {
+        await prefs.setInt('event_notification_count', eventCount);
+        _notificationCountController.add(eventCount);
+        print('🔔 Badge güncellendi: $eventCount etkinlik');
+      }
+    } catch (e) {
+      print('❌ Badge güncelleme hatası: $e');
+    }
+  }
+
   // Test için manuel bildirim gönderme
   static Future<void> sendTestNotification() async {
+    final now = DateTime.now();
     await _showNotification(
       9999,
-      'Test Bildirimi',
-      'Bu bir test bildirimidir. ${DateTime.now().toString()}',
+      '🔔 KET Test Bildirimi',
+      'Bildirim sistemi çalışıyor! \nZaman: ${DateFormat('dd/MM/yyyy HH:mm:ss').format(now)}',
+      payload: 'https://www.google.com',
     );
+    
+    // Badge'i de artır
+    await _incrementNotificationBadge();
+    print('✅ Test bildirimi gönderildi ve badge artırıldı');
   }
+
+  // Main.dart koduma test bildirimi butonu eklemiştim onun için ekledim 
+  static Future<void> sendNearestEventTestNotification() async {
+    try {
+      final now = DateTime.now();
+      final collection = FirebaseFirestore.instance.collection('yaklasan_etkinlikler');
+      
+      final querySnapshot = await collection
+          .where('date', isGreaterThan: Timestamp.fromDate(now))
+          .orderBy('date', descending: false)
+          .limit(1)
+          .get();
+      
+      if (querySnapshot.docs.isNotEmpty) {
+        final doc = querySnapshot.docs.first;
+        final data = doc.data();
+        final eventTitle = data['title'] ?? 'Test Etkinlik';
+        final eventDetails = data['details'] ?? 'Test detayları';
+        final eventDate = (data['date'] as Timestamp).toDate();
+        final difference = eventDate.difference(now);
+        
+        await _showNotification(
+          8888,
+          '🎯 TEST: $eventTitle',
+          'Kalan süre: ${difference.inDays}g ${difference.inHours.remainder(24)}s\n$eventDetails',
+          payload: data['url'] as String?,
+        );
+        
+        await _incrementNotificationBadge();
+        print('✅ En yakın etkinlik test bildirimi gönderildi: $eventTitle');
+      } else {
+        await sendTestNotification(); // Etkinlik yoksa normal test bildirimi gönder
+      }
+    } catch (e) {
+      print('❌ Test bildirimi hatası: $e');
+      await sendTestNotification(); // Hata durumunda normal test bildirimi gönder
+    }
+  }
+    // Main.dart koduma test bildirimi butonu eklemiştim onun için ekledim 
 
   // Eski bildirim verilerini temizleme metodu
   static Future<void> cleanOldNotifications() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final collection = FirebaseFirestore.instance.collection('yaklasan_etkinlikler');
+      final collection =
+          FirebaseFirestore.instance.collection('yaklasan_etkinlikler');
 
       final querySnapshot = await collection.get();
       final existingEventIds = querySnapshot.docs.map((doc) => doc.id).toSet();
@@ -296,8 +411,10 @@ class NotificationService {
   // Firestore'daki tüm etkinlikleri listele (debug için)
   static Future<void> listAllEvents() async {
     try {
-      final collection = FirebaseFirestore.instance.collection('yaklasan_etkinlikler');
-      final querySnapshot = await collection.orderBy('date', descending: false).get();
+      final collection =
+          FirebaseFirestore.instance.collection('yaklasan_etkinlikler');
+      final querySnapshot =
+          await collection.orderBy('date', descending: false).get();
 
       print("\n📋 FIRESTORE'DAKİ TÜM ETKİNLİKLER:");
       for (var doc in querySnapshot.docs) {
@@ -309,7 +426,8 @@ class NotificationService {
         if (date != null) {
           final difference = date.difference(DateTime.now());
           final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(date);
-          print("   - ${data['title']}: $formattedDate (${difference.inDays}g ${difference.inHours.remainder(24)}s kaldı) - ID: ${doc.id}");
+          print(
+              "   - ${data['title']}: $formattedDate (${difference.inDays}g ${difference.inHours.remainder(24)}s kaldı) - ID: ${doc.id}");
         }
       }
     } catch (e) {
@@ -317,15 +435,15 @@ class NotificationService {
     }
   }
 
-  // ✅ YENİ: Belirli bir etkinliğin bildirim geçmişini temizleme
+  // Belirli bir etkinliğin bildirim geçmişini temizleme
   static Future<void> clearEventNotificationHistory(String eventId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
       final keysToRemove = [
         'notified_7days_$eventId',
-        'notified_1day_$eventId',
-        'notified_1hour_$eventId'
+        'notified_2days_$eventId',
+        'notified_2hours_$eventId'
       ];
 
       int removedCount = 0;

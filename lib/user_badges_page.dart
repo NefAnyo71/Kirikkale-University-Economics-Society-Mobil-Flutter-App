@@ -257,6 +257,12 @@ class _UserBadgesPageState extends State<UserBadgesPage> {
         break;
       case badge_model.BadgeType.special:
         return const SizedBox();
+      case badge_model.BadgeType.share:
+      case badge_model.BadgeType.like:
+      case badge_model.BadgeType.download:
+        current = userStats['totalDownloads'] ?? 0;
+        required = badge.requirement;
+        break;
     }
 
     double progress = required > 0 ? (current / required).clamp(0.0, 1.0) : 0.0;

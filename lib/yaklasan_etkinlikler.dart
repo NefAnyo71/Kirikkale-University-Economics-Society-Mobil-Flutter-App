@@ -6,10 +6,14 @@ import 'package:url_launcher/url_launcher.dart';
 class EtkinlikJson2 extends StatelessWidget {
   const EtkinlikJson2({super.key});
 
-  void _setAlarmForEvent(BuildContext context, DateTime eventDate, String eventTitle) {
+  void _setAlarmForEvent(
+      BuildContext context, DateTime eventDate, String eventTitle) {
     final alarmOptions = [
       {'sure': '1 saat', 'time': eventDate.subtract(const Duration(hours: 1))},
-      {'sure': '1.5 saat', 'time': eventDate.subtract(const Duration(minutes: 90))},
+      {
+        'sure': '1.5 saat',
+        'time': eventDate.subtract(const Duration(minutes: 90))
+      },
       {'sure': '2 saat', 'time': eventDate.subtract(const Duration(hours: 2))},
     ];
 
@@ -17,12 +21,14 @@ class EtkinlikJson2 extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Alarm Seçeneği ⏰', style: TextStyle(color: Colors.black)),
+          title: const Text('Alarm Seçeneği ⏰',
+              style: TextStyle(color: Colors.black)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('"$eventTitle" etkinliği için:', style: const TextStyle(color: Colors.black)),
+              Text('"$eventTitle" etkinliği için:',
+                  style: const TextStyle(color: Colors.black)),
               const SizedBox(height: 16),
               ...alarmOptions.map((option) {
                 final time = option['time'] as DateTime;
@@ -30,7 +36,8 @@ class EtkinlikJson2 extends StatelessWidget {
                   leading: const Icon(Icons.alarm, color: Colors.orange),
                   title: Text(
                     '${option['sure']} önce',
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                        color: Colors.black, fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
                     DateFormat('dd/MM/yyyy HH:mm').format(time),
@@ -55,7 +62,8 @@ class EtkinlikJson2 extends StatelessWidget {
     );
   }
 
-  Future<void> _launchAlarmApp(BuildContext context, DateTime alarmTime, String eventTitle) async {
+  Future<void> _launchAlarmApp(
+      BuildContext context, DateTime alarmTime, String eventTitle) async {
     try {
       final hour = alarmTime.hour;
       final minute = alarmTime.minute;
@@ -128,7 +136,6 @@ class EtkinlikJson2 extends StatelessWidget {
         print('🔍 Saat uygulaması açılıyor...');
         await _openClockAppDirectly();
       }
-
     } catch (e) {
       print('❌ Alarm uygulaması açılamadı: $e');
       _showError(context);
@@ -150,7 +157,8 @@ class EtkinlikJson2 extends StatelessWidget {
           await launchUrl(Uri.parse('package:$androidClock'));
         } else {
           // Son çare
-          await launchUrl(Uri.parse('https://play.google.com/store/search?q=alarm%20clock&c=apps'));
+          await launchUrl(Uri.parse(
+              'https://play.google.com/store/search?q=alarm%20clock&c=apps'));
         }
       }
     } catch (e) {
@@ -161,7 +169,8 @@ class EtkinlikJson2 extends StatelessWidget {
   void _showError(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Alarm uygulaması açılamadı. Lütfen manuel olarak alarm kurun.'),
+        content: Text(
+            'Alarm uygulaması açılamadı. Lütfen manuel olarak alarm kurun.'),
         backgroundColor: Colors.red,
         duration: Duration(seconds: 4),
       ),
@@ -275,7 +284,8 @@ class EtkinlikJson2 extends StatelessWidget {
                 final remainingHours = remainingTime.inHours.remainder(24);
                 final remainingMinutes = remainingTime.inMinutes.remainder(60);
 
-                final formattedDate = DateFormat('dd MMMM yyyy, HH:mm', 'tr_TR').format(date);
+                final formattedDate =
+                    DateFormat('dd MMMM yyyy, HH:mm', 'tr_TR').format(date);
 
                 return Container(
                   margin: const EdgeInsets.only(bottom: 20),
@@ -313,7 +323,8 @@ class EtkinlikJson2 extends StatelessWidget {
                                   errorBuilder: (context, error, stackTrace) {
                                     return Container(
                                       color: Colors.grey[200],
-                                      child: const Icon(Icons.error, color: Colors.grey),
+                                      child: const Icon(Icons.error,
+                                          color: Colors.grey),
                                     );
                                   },
                                 ),
@@ -415,11 +426,14 @@ class EtkinlikJson2 extends StatelessWidget {
                               SizedBox(
                                 width: double.infinity,
                                 child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.alarm_add, color: Colors.white),
-                                  label: const Text('Alarm Kur', style: TextStyle(color: Colors.white)),
+                                  icon: const Icon(Icons.alarm_add,
+                                      color: Colors.white),
+                                  label: const Text('Alarm Kur',
+                                      style: TextStyle(color: Colors.white)),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.blue[800],
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),

@@ -1,157 +1,273 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_tts/flutter_tts.dart';
-import 'package:speech_to_text/speech_to_text.dart';
-import 'package:audio_waveforms/audio_waveforms.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:convert';
-import 'dart:io';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-class GeminiChatPage extends StatefulWidget {
-  final String userName;
-  final String userSurname;
-  final String userEmail;
+class GeminiChatPage extends StatelessWidget {
+  GeminiChatPage({
+    super.key,
+    this.userName,
+    this.userSurname,
+    this.userEmail,
+  });
 
-  const GeminiChatPage({
-    Key? key,
-    required this.userName,
-    required this.userSurname,
-    required this.userEmail,
-  }) : super(key: key);
+  final String? userName;
+  final String? userSurname;
+  final String? userEmail;
 
   @override
-  _GeminiChatPageState createState() => _GeminiChatPageState();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/images/ketyapayzeka.png',
+              height: 32, // İkonun yüksekliğini ayarlayabilirsiniz
+            ),
+            const SizedBox(width: 12),
+            const Text(
+              "KET Asistan",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.deepPurple.shade700,
+        foregroundColor: Colors.white,
+        centerTitle: true,
+        elevation: 4,
+      ),
+      backgroundColor: Colors.grey[100],
+      body: ChatBody(
+        userName: userName,
+        userSurname: userSurname,
+        userEmail: userEmail,
+      ),
+    );
+  }
 }
 
-class _GeminiChatPageState extends State<GeminiChatPage> {
-  final TextEditingController _messageController = TextEditingController();
+class ChatBody extends StatefulWidget {
+  final String? userName;
+  final String? userSurname;
+  final String? userEmail;
+
+  const ChatBody({
+    super.key,
+    this.userName,
+    this.userSurname,
+    this.userEmail,
+  });
+
+  @override
+  State<ChatBody> createState() => _ChatBodyState();
+}
+
+class _ChatBodyState extends State<ChatBody> {
+  final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
-  bool _isLoading = false;
-  late final String _apiKey;
-  final FocusNode _messageFocusNode = FocusNode();
-  bool _isDarkMode = false;
+  // Bilgi haritasını state içine taşıdık
+  final Map<String, String> ekonomiTopluluguBilgileri = {
+    // Topluluk hakkında
+    "topluluk nedir":
+        "Ben KET Asistan, Kırıkkale Üniversitesi Ekonomi Topluluğu'nun dijital yardımcısıyım. Ekonomi alanında faaliyet gösteren bir öğrenci topluluğuyuz.",
+    "topluluk amacı":
+        "Ekonomi bilincini geliştirmek, seminerler düzenlemek ve öğrencileri ekonomi alanında bilgilendirmek.",
+    "topluluk başkanı":
+        "Topluluk başkanı hakkında güncel bilgi için ekonomi bölümüne danışabilirsiniz.",
 
-  // Ses özellikleri
-  final FlutterTts _flutterTts = FlutterTts();
-  final SpeechToText _speechToText = SpeechToText();
-  final RecorderController _recorderController = RecorderController();
-  final AudioPlayer _audioPlayer = AudioPlayer();
-  final ImagePicker _imagePicker = ImagePicker();
+    // Ekonomi terimleri
+    "enflasyon":
+        "Enflasyon, mal ve hizmet fiyatlarının genel seviyesindeki sürekli artıştır.",
+    "faiz": "Faiz, borç alınan paranın kullanımı için ödenen bedeldir.",
+    "döviz kuru":
+        "Döviz kuru, bir ülke parasının diğer bir ülke parası cinsinden değeridir.",
+    "büyüme":
+        "Ekonomik büyüme, bir ekonominin üretim kapasitesindeki artıştır.",
+    "ekonomi":
+        "Ekonomi, sınırsız ihtiyaçların sınırlı kaynaklarla nasıl karşılanacağını inceleyen bilim dalıdır.",
 
-  bool _isListening = false;
-  bool _isRecording = false;
-  bool _isSpeaking = false;
+    // Üniversite bilgileri
+    "kırıkkale üniversitesi": // "kü" anahtarı ile birleştirilebilir
+        "Kırıkkale Üniversitesi, 1992 yılında kurulmuş devlet üniversitesidir.",
+    "ekonomi bölümü":
+        "İktisadi ve İdari Bilimler Fakültesi bünyesinde eğitim vermektedir.",
+    "iletişim":
+        "Detaylı bilgi için üniversitenin resmi web sitesini ziyaret edebilirsiniz.",
+    "kü":
+        "Kırıkkale Üniversitesi, 1992 yılında kurulmuş köklü bir devlet üniversitesidir.",
 
-  // Kullanıcı sınırları - Daha sıkı limitler
-  int _dailyPromptCount = 0;
-  int _fiveMinutePromptCount = 0;
-  DateTime? _lastPromptTime;
-  DateTime? _dailyResetTime;
+    // Genel ekonomi
+    "makroekonomi": "Makroekonomi, ekonominin bir bütün olarak incelenmesidir.",
+    "mikroekonomi":
+        "Mikroekonomi, bireysel ekonomik birimlerin davranışlarını inceler.",
+    "iktisat":
+        "İktisat, sınırsız ihtiyaçların sınırlı, ihtiyaçların sınırsız olduğu durumda optimal dağılımı inceler.",
+    "gsyh":
+        "GSYH (Gayri Safi Yurtiçi Hasıla), bir ülkenin belirli dönemde ürettiği nihai mal ve hizmetlerin toplam değeridir.",
 
-  // En çok sorulan sorular
-  final List<String> _frequentQuestions = [
-    'KET nedir?',
-    'Nasıl üye olabilirim?',
-    'Etkinlikler ücretsiz mi?',
-    'Ders notları nasıl paylaşılır?',
-    'Sosyal medya hesapları neler?',
-    'İletişim bilgileri neler?',
-    'Yaklaşan etkinlikler hakkında bilgi verebilirmisin?',
-  ];
+    // Selamlama ve diğerleri
+    "merhaba": "Merhaba! Sana nasıl yardımcı olabilirim?",
+    "selam": "Selam! Ekonomi veya topluluk hakkında bir sorun mu var?",
+    "nasılsın":
+        "Teşekkür ederim, iyiyim! Ekonomi verilerini analiz ediyorum. Senin için ne yapabilirim?",
+  };
 
-  // KET bilgi bankası - Kısaltılmış versiyon
-  final Map<String, String> _ketKnowledgeBase = {
-  // GENEL BİLGİLER
-  'topluluk': 'Kırıkkale Üniversitesi İİBF bünyesinde 2020\'de kurulmuş ekonomi topluluğu. 500+ üye. Üyelik ücretsiz.',
-  'üyelik': 'Ücretsiz. Uygulama içindeki "Üye Kaydı" bölümünden formu doldurarak başvurabilirsin.',
-  'etkinlikler': 'Seminer, workshop, gezi gibi etkinlikler düzenliyoruz. Katılım çoğunlukla ücretsiz.',
-  'iletişim_bilgi': 'E-posta: arifkerem71@gmail.com',
-
-  // DERS NOTU SİSTEMİ
-  'ders_notları': 'Üyelerin paylaştığı ders notlarını PDF/JPG formatında indirebilirsin.',
-  'ders_notu_indirme': '"Ders Notu Paylaşım Sistemi"ne git > Ders ara > İndir. Günde max. 10 not indirebilirsin. Her indirme 1 puan.',
-  'not_değerlendirme': 'İndirdiğin notları 1-5 yıldız ile değerlendir. Not sahibi her yıldız için 2 puan kazanır.',
-  'kullanım_kuralları': 'Sadece kendi hazırladığın notları paylaş. Telif hakkı ihlali yasak. Eğitim amaçlı kullan.',
-  'sık_sorulan_sorular': 'Not onayı: Kalitesiz/okunaksız/telif içeren notlar onaylanmaz. Puanlar akademik yıl sonunda sıfırlanır.',
-
-  // EKONOMİ HABERLERİ ve PİYASA
-  'ekonomi_haberleri': 'Anadolu Ajansı, Bloomberg HT gibi kaynaklardan son ekonomi haberleri. 30 dakikada bir güncellenir.',
-  'piyasa_verileri': 'Canlı döviz kuru, emtia, kripto para ve BIST verileri. 10 saniyede bir güncellenir.',
-  'grafik_analiz': 'Finansal enstrümanlar için detaylı çizgi, mum ve alan grafikleri. Teknik analiz araçları mevcut.',
-  'portföy_takip': 'Kişisel portföy oluşturup alış-satış işlemlerini takip edebilir, kar-zarar durumunu görebilirsin.',
-  'ekonomik_takvim': 'Önemli ekonomik verilerin açıklanma tarihleri. Ülke ve önem derecesine göre filtreleme yapabilirsin.',
-
-  // SOSYAL MEDYA ve İLETİŞİM
-  'sosyal_medya': 'Instagram: @kku_ekonomi_toplulugu - Twitter: @KET_KKU - LinkedIn: KET - YouTube: KET TV',
-  'iletişim': 'İletişim için: arifkerem71@gmail.com',
-  'geri_bildirim': 'Geri bildirimlerini uygulama içindeki "Geri Bildirim" bölümünden iletebilirsin.',
-
-  // ÜYELİK ve HESAP
-  'üyelik_koşulları': 'Kırıkkale Üniversitesi\'nde aktif öğrenci olmak ve topluluk tüzüğünü kabul etmek yeterli.',
-  'hesap_ayarları': 'Profil bilgilerini güncelle, şifre değiştir, bildirim tercihlerini yönet.',
-  'bildirim_ayarları': 'Etkinlik hatırlatmaları, yeni etkinlik duyuruları, önemli haber bildirimleri alabilirsin.',
-  'hesap_silme': 'Hesabını silersen kişisel verilerin silinir, ancak paylaştığın notlar anonim olarak kalır.',
-
-  // TEKNİK DESTEK
-  'sorun_giderme': 'İnternet bağlantını kontrol et > Uygulamayı kapatıp aç > Cihazı yeniden başlat > Uygulamayı güncelle.',
-  'destek_iletişim': 'Teknik sorunlar için: arifkerem71@gmail.com adresine cihaz ve yazılım bilgilerini yazarak ulaş.',
-
-  // SIK SORULAN SORULAR
-  'üyelik_ücreti': 'Hayır, KET üyeliği ve etkinliklere katılım tamamen ücretsizdir.',
-  'mezun_üyelik': 'Evet, Kırıkkale Üniversitesi mezunları da üye olabilir ve etkinliklere katılabilir.',
-  'sertifika_geçerlilik': 'Etkinlik katılım sertifikaları CV\'ne ekleyebileceğin Kırıkkale Üniversitesi onaylı belgelerdir.',
-  'uygulama_güvenliği': 'Veri iletimi SSL ile şifrelenir, şifreler hash\'lenir, düzenli güvenlik denetimleri yapılır.',
-};
   @override
   void initState() {
     super.initState();
-    _apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    _loadChatHistory();
-    _loadUserLimits();
-    _loadThemePreference();
-    _initializeTts();
-    _initializeSpeech();
-    if (_messages.isEmpty) {
-      _addMessage('KET',
-          'Merhaba ${widget.userName} ${widget.userSurname}! 👋 Ben KET, Kırıkkale Üniversitesi Ekonomi Topluluğu asistanınızım. Sana nasıl yardımcı olabilirim?',
-          isWelcome: true);
+    initializeDateFormatting('tr_TR');
+    // İlk açılışta hoş geldin mesajı göster
+    _showWelcomeMessage();
+  }
+
+  String _getPersonalizedGreeting() {
+    if (widget.userName != null && widget.userSurname != null) {
+      return "Merhaba ${widget.userName} ${widget.userSurname}! Ben KET Asistan. 🎓\n\nSana ekonomi terimleri, topluluk etkinlikleri veya üniversite hakkında nasıl yardımcı olabilirim?";
+    } else if (widget.userName != null) {
+      return "Merhaba ${widget.userName}! Ben KET Asistan. 🎓\n\nSana ekonomi terimleri, topluluk etkinlikleri veya üniversite hakkında nasıl yardımcı olabilirim?";
+    } else {
+      return "Merhaba! Ben KET Asistan. 🎓\n\nSana ekonomi terimleri, topluluk etkinlikleri veya üniversite hakkında nasıl yardımcı olabilirim?";
+    }
+  }
+
+  String _getRestrictedResponse(
+      String userInput, List<Map<String, dynamic>> upcomingEvents) {
+    String lowerInput = userInput.toLowerCase();
+
+    // Kullanıcı kendisi hakkında soru soruyorsa
+    if (lowerInput.contains("ben kimim") || lowerInput.contains("kimim ben")) {
+      if (widget.userName != null &&
+          widget.userSurname != null &&
+          widget.userEmail != null) {
+        return "Siz ${widget.userName} ${widget.userSurname}'siniz. E-posta adresiniz: ${widget.userEmail}";
+      } else if (widget.userName != null && widget.userSurname != null) {
+        return "Siz ${widget.userName} ${widget.userSurname}'siniz.";
+      } else if (widget.userName != null) {
+        return "Siz ${widget.userName}'sınız.";
+      } else {
+        return "Kullanıcı bilgileriniz bulunamadı.";
+      }
     }
 
-    // Odak noktasını ayarla
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      FocusScope.of(context).requestFocus(_messageFocusNode);
-    });
+    // Yaklaşan etkinlikler hakkında soru sorulursa
+    if (lowerInput.contains("yaklaşan etkinlik") ||
+        lowerInput.contains("gelecek etkinlik") ||
+        lowerInput.contains("etkinlikler neler") ||
+        lowerInput.contains("etkinlik")) {
+      if (upcomingEvents.isEmpty) {
+        return "Şu anda planlanmış bir etkinlik bulunmuyor. Takvimi daha sonra tekrar kontrol edebilirsin.";
+      }
+
+      String eventList = "İşte yaklaşan etkinliklerimiz:\n\n";
+      for (var event in upcomingEvents) {
+        String title = event['title'] ?? 'Başlıksız';
+        DateTime date = (event['date'] as Timestamp).toDate();
+        String formattedDate =
+            DateFormat('dd MMMM yyyy, HH:mm', 'tr_TR').format(date);
+        eventList += "🗓️ **$title**\n";
+        eventList += "   - **Tarih:** $formattedDate\n";
+        eventList += "   - **Detay:** ${event['details'] ?? 'Detay yok'}\n\n";
+      }
+      return eventList.trim();
+    }
+
+    // Haritadaki anahtar kelimeleri kontrol et
+    for (var entry in ekonomiTopluluguBilgileri.entries) {
+      if (lowerInput.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+
+    // Özel durumlar
+    if (lowerInput.contains("teşekkür") ||
+        lowerInput.contains("sağ ol") ||
+        lowerInput.contains("thanks")) {
+      String thanksMsg = "Rica ederim";
+      if (widget.userName != null) {
+        thanksMsg += " ${widget.userName}";
+      }
+      thanksMsg +=
+          "! Başka sorunuz var mı? Ekonomi ile ilgili merak ettiklerinizi sormaktan çekinmeyin. 📈";
+      return thanksMsg;
+    } else if (lowerInput.contains("görüşürüz") ||
+        lowerInput.contains("hoşça kal") ||
+        lowerInput.contains("bye")) {
+      String goodbyeMsg = "Görüşmek üzere";
+      if (widget.userName != null) {
+        goodbyeMsg += " ${widget.userName}";
+      }
+      goodbyeMsg +=
+          "! Kırıkkale Üniversitesi Ekonomi Topluluğu olarak başarılar dileriz. 🎯";
+      return goodbyeMsg;
+    }
+
+    // Konu dışı sorular için
+    return "Üzgünüm, bu konuda bilgim yok. Sadece Kırıkkale Üniversitesi Ekonomi Topluluğu ve ekonomi ile ilgili konularda yardımcı olabilirim. \n\nLütfen şu konularda sorular sorun:\n• Ekonomi terimleri\n• Topluluk etkinlikleri\n• Üniversite bilgileri\n• Ekonomi teorileri";
   }
 
-  @override
-  void dispose() {
-    _flutterTts.stop();
-    _recorderController.dispose();
-    _audioPlayer.dispose();
-    super.dispose();
-  }
-
-  void _addMessage(String sender, String message,
-      {bool isWelcome = false, String? imagePath, String? audioPath}) {
-    setState(() {
-      _messages.add({
-        'sender': sender,
-        'message': message,
-        'time': DateTime.now().toIso8601String(),
-        'isWelcome': isWelcome,
-        'imagePath': imagePath,
-        'audioPath': audioPath,
+  void _showWelcomeMessage() {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _messages.add({
+          "role": "assistant",
+          "text": _getPersonalizedGreeting(),
+          "time": DateTime.now()
+        });
       });
     });
-    _saveChatHistory();
-    Future.delayed(const Duration(milliseconds: 100), () {
+  }
+
+  Future<List<Map<String, dynamic>>> _getUpcomingEvents() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('yaklasan_etkinlikler')
+          .where('date', isGreaterThanOrEqualTo: Timestamp.now())
+          .orderBy('date', descending: false)
+          .limit(3) // Sohbeti yormamak için ilk 3 etkinliği alalım
+          .get();
+
+      return snapshot.docs.map((doc) => doc.data()).toList();
+    } catch (e) {
+      print("Yaklaşan etkinlikler alınırken hata: $e");
+      return [];
+    }
+  }
+
+  void _sendMessage(String text) async {
+    if (text.isEmpty) return;
+
+    // Kullanıcı mesajını ekle
+    setState(() {
+      _messages.add({"role": "user", "text": text, "time": DateTime.now()});
+    });
+    _controller.clear();
+    _scrollToBottom();
+
+    // Yaklaşan etkinlik verilerini çek
+    final upcomingEvents = await _getUpcomingEvents();
+    // Kısıtlı yanıtı al
+    String response = _getRestrictedResponse(text, upcomingEvents);
+
+    // Asistan yanıtını ekle (küçük gecikme ile)
+    Future.delayed(const Duration(milliseconds: 500), () {
+      setState(() {
+        _messages.add(
+            {"role": "assistant", "text": response, "time": DateTime.now()});
+      });
+
+      _scrollToBottom();
+    });
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
@@ -162,1216 +278,190 @@ class _GeminiChatPageState extends State<GeminiChatPage> {
     });
   }
 
-  Future<void> _sendMessage() async {
-    if (_messageController.text.trim().isEmpty) return;
-
-    // Sınır kontrolleri
-    if (!_checkUserLimits()) return;
-
-    final userMessage = _messageController.text.trim();
-    _addMessage('Sen', userMessage);
-    _messageController.clear();
-
-    // Prompt sayısını artır
-    _incrementPromptCount();
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final response = await _callGeminiAPI(userMessage);
-      _addMessage('KET', response);
-    } catch (e) {
-      _addMessage('KET',
-          'Üzgünüm, bir hata oluştu. Lütfen daha sonra tekrar deneyin. Eğer sorun devam ederse arifkerem71@gmail.com adresine bildirimde bulunabilirsiniz.');
-    }
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<String> _getRelevantInfo(String userMessage) async {
-    final lowerMessage = userMessage.toLowerCase();
-    String relevantInfo = '';
-
-    // Etkinlik sorularını kontrol et
-    if (lowerMessage.contains('etkinlik') ||
-        lowerMessage.contains('program') ||
-        lowerMessage.contains('yaklaşan') ||
-        lowerMessage.contains('ne zaman') ||
-        lowerMessage.contains('tarih') ||
-        lowerMessage.contains('saat')) {
-      final eventsInfo = await _getUpcomingEvents();
-      if (eventsInfo.isNotEmpty) {
-        relevantInfo += eventsInfo;
-      }
-    }
-
-    _ketKnowledgeBase.forEach((key, value) {
-      if (lowerMessage.contains(key) ||
-          lowerMessage.contains(key.replaceAll('_', ' ')) ||
-          (key == 'etkinlikler' &&
-              (lowerMessage.contains('etkinlik') ||
-                  lowerMessage.contains('program'))) ||
-          (key == 'ders_notları' &&
-              (lowerMessage.contains('not') ||
-                  lowerMessage.contains('ders'))) ||
-          (key == 'ekonomi_haberleri' &&
-              (lowerMessage.contains('haber') ||
-                  lowerMessage.contains('ekonomi'))) ||
-          (key == 'üyelik' &&
-              (lowerMessage.contains('üye') ||
-                  lowerMessage.contains('kayıt'))) ||
-          (key == 'iletişim' &&
-              (lowerMessage.contains('iletişim') ||
-                  lowerMessage.contains('ulaş'))) ||
-          (key == 'sorun_giderme' &&
-              (lowerMessage.contains('sorun') ||
-                  lowerMessage.contains('hata') ||
-                  lowerMessage.contains('çalışmıyor'))) ||
-          (key == 'hesap_sorunları' &&
-              (lowerMessage.contains('giriş') ||
-                  lowerMessage.contains('şifre') ||
-                  lowerMessage.contains('hesap'))) ||
-          (key == 'bildirim_sorunları' &&
-              (lowerMessage.contains('bildirim') ||
-                  lowerMessage.contains('uyarı'))) ||
-          (key == 'dosya_sorunları' &&
-              (lowerMessage.contains('dosya') ||
-                  lowerMessage.contains('yükle') ||
-                  lowerMessage.contains('indirme')))) {
-        relevantInfo += '$value ';
-      }
-    });
-
-    return relevantInfo.isNotEmpty
-        ? relevantInfo
-        : _ketKnowledgeBase['topluluk']!;
-  }
-
-  Future<String> _getUpcomingEvents() async {
-    try {
-      final now = DateTime.now();
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('yaklasan_etkinlikler')
-          .where('date', isGreaterThan: Timestamp.fromDate(now))
-          .orderBy('date', descending: false)
-          .limit(5)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        return 'Şu anda yaklaşan etkinlik bulunmamaktadır.';
-      }
-
-      String eventsInfo = 'Yaklaşan Etkinlikler:\n';
-
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data();
-        final title = data['title'] ?? 'İsimsiz Etkinlik';
-        final details = data['details'] ?? '';
-        final url = data['url'] ?? '';
-
-        if (data['date'] is Timestamp) {
-          final eventDate = (data['date'] as Timestamp).toDate();
-          final formattedDate =
-              DateFormat('dd MMMM yyyy, HH:mm', 'tr_TR').format(eventDate);
-          final difference = eventDate.difference(now);
-
-          String timeLeft = '';
-          if (difference.inDays > 0) {
-            timeLeft =
-                '${difference.inDays} gün ${difference.inHours.remainder(24)} saat kaldı';
-          } else if (difference.inHours > 0) {
-            timeLeft =
-                '${difference.inHours} saat ${difference.inMinutes.remainder(60)} dakika kaldı';
-          } else {
-            timeLeft = '${difference.inMinutes} dakika kaldı';
-          }
-
-          eventsInfo += '\n• $title\n';
-          eventsInfo += '  Tarih: $formattedDate\n';
-          eventsInfo += '  Kalan Süre: $timeLeft\n';
-          if (details.isNotEmpty) {
-            eventsInfo += '  Detaylar: $details\n';
-          }
-          if (url.isNotEmpty) {
-            eventsInfo += '  Link: $url\n';
-          }
-        }
-      }
-
-      return eventsInfo;
-    } catch (e) {
-      print('Etkinlik verilerini alırken hata: $e');
-      return 'Etkinlik bilgileri şu anda alınamıyor.';
-    }
-  }
-
-  Future<void> _loadChatHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final chatKey = 'chat_history_${widget.userName}_${widget.userSurname}';
-    final chatData = prefs.getString(chatKey);
-    if (chatData != null) {
-      final List<dynamic> decoded = jsonDecode(chatData);
-      setState(() {
-        _messages.clear();
-        _messages
-            .addAll(decoded.map((e) => Map<String, dynamic>.from(e)).toList());
-      });
-    }
-  }
-
-  Future<void> _saveChatHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final chatKey = 'chat_history_${widget.userName}_${widget.userSurname}';
-    await prefs.setString(chatKey, jsonEncode(_messages));
-  }
-
-  Future<void> _loadThemePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isDarkMode = prefs.getBool('chat_dark_mode') ?? false;
-    });
-  }
-
-  Future<void> _toggleTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-    await prefs.setBool('chat_dark_mode', _isDarkMode);
-  }
-
-  void _deleteMessage(int index) {
-    setState(() {
-      _messages.removeAt(index);
-    });
-    _saveChatHistory();
-  }
-
-  void _copyMessage(String message) {
-    Clipboard.setData(ClipboardData(text: message));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Mesaj kopyalandı'),
-        backgroundColor: _isDarkMode ? Colors.grey[800] : Colors.green,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
-
-  // Ses özellikleri başlatma
-  Future<void> _initializeTts() async {
-    await _flutterTts.setLanguage('tr-TR');
-    await _flutterTts.setSpeechRate(0.5);
-    await _flutterTts.setVolume(1.0);
-    await _flutterTts.setPitch(1.0);
-  }
-
-  Future<void> _initializeSpeech() async {
-    await _speechToText.initialize();
-  }
-
-  // Metni sesli okuma
-  Future<void> _speakText(String text) async {
-    if (_isSpeaking) {
-      await _flutterTts.stop();
-      setState(() => _isSpeaking = false);
-    } else {
-      setState(() => _isSpeaking = true);
-      await _flutterTts.speak(text);
-      _flutterTts.setCompletionHandler(() {
-        setState(() => _isSpeaking = false);
-      });
-    }
-  }
-
-  // Sesli mesaj kaydetme
-  Future<void> _toggleRecording() async {
-    if (_isRecording) {
-      final path = await _recorderController.stop();
-      setState(() {
-        _isRecording = false;
-      });
-      if (path != null) {
-        _addMessage('Sen', 'Sesli mesaj gönderildi', audioPath: path);
-        // Sesli mesaj için limit kontrolü ve sayaç artırma
-        if (_checkUserLimits()) {
-          _incrementPromptCount();
-          _addMessage(
-              'KET', 'Sesli mesajınızı aldım. Size nasıl yardımcı olabilirim?');
-        }
-      }
-    } else {
-      if (await _recorderController.checkPermission()) {
-        await _recorderController.record(
-            path:
-                '/storage/emulated/0/Download/voice_message_${DateTime.now().millisecondsSinceEpoch}.m4a');
-        setState(() => _isRecording = true);
-      }
-    }
-  }
-
-  // Sesli mesaj çalma
-  Future<void> _playAudio(String path) async {
-    await _audioPlayer.play(DeviceFileSource(path));
-  }
-
-  // Sesle soru sorma
-  Future<void> _toggleListening() async {
-    if (_isListening) {
-      await _speechToText.stop();
-      setState(() => _isListening = false);
-    } else {
-      if (await _speechToText.initialize()) {
-        setState(() => _isListening = true);
-        await _speechToText.listen(
-          onResult: (result) {
-            setState(() {
-              _messageController.text = result.recognizedWords;
-            });
-            if (result.finalResult) {
-              setState(() => _isListening = false);
-              _sendMessage();
-            }
-          },
-          localeId: 'tr_TR',
-        );
-      }
-    }
-  }
-
-  // Fotoğraf gönderme
-  Future<void> _pickImage() async {
-    final XFile? image =
-        await _imagePicker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      _addMessage('Sen', 'Fotoğraf gönderildi', imagePath: image.path);
-      _sendImageToGemini(image.path);
-    }
-  }
-
-  Future<void> _sendImageToGemini(String imagePath) async {
-    // Sınır kontrolleri
-    if (!_checkUserLimits()) return;
-
-    // Prompt sayısını artır
-    _incrementPromptCount();
-
-    setState(() => _isLoading = true);
-    try {
-      final bytes = await File(imagePath).readAsBytes();
-      final base64Image = base64Encode(bytes);
-
-      final response = await _callGeminiVisionAPI(base64Image);
-      _addMessage('KET', response);
-    } catch (e) {
-      _addMessage('KET', 'Görsel analiz edilemedi. Lütfen tekrar deneyin.');
-    }
-    setState(() => _isLoading = false);
-  }
-
-  Future<String> _callGeminiVisionAPI(String base64Image) async {
-    final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$_apiKey');
-
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'contents': [
-          {
-            'parts': [
-              {
-                'text':
-                    'Bu görseli analiz et ve KET (Kırıkkale Üniversitesi Ekonomi Topluluğu) bağlamında açıkla. Eğer ekonomi, finans veya eğitimle ilgiliyse detaylı bilgi ver.'
-              },
-              {
-                'inline_data': {'mime_type': 'image/jpeg', 'data': base64Image}
-              }
-            ]
-          }
-        ]
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['candidates'] != null && data['candidates'].isNotEmpty) {
-        return data['candidates'][0]['content']['parts'][0]['text'];
-      }
-    }
-    throw Exception('Görsel analiz hatası');
-  }
-
-  String _formatTime(String timeString) {
-    final dateTime = DateTime.parse(timeString);
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} saat önce';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} dakika önce';
-    } else {
-      return 'Az önce';
-    }
-  }
-
-  void _showFrequentQuestions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: _isDarkMode ? Colors.grey[900] : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'En Çok Sorulan Sorular',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: _isDarkMode ? Colors.white : Colors.black,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ..._frequentQuestions
-                .map((question) => ListTile(
-                      leading: Icon(Icons.help_outline,
-                          color:
-                              _isDarkMode ? Colors.white70 : Colors.deepPurple),
-                      title: Text(question,
-                          style: TextStyle(
-                              color:
-                                  _isDarkMode ? Colors.white : Colors.black)),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _messageController.text = question;
-                        _sendMessage();
-                      },
-                    ))
-                .toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _loadUserLimits() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userKey = '${widget.userName}_${widget.userSurname}';
-    _dailyPromptCount = prefs.getInt('daily_prompts_$userKey') ?? 0;
-    _fiveMinutePromptCount = prefs.getInt('five_min_prompts_$userKey') ?? 0;
-
-    final dailyResetStr = prefs.getString('daily_reset_$userKey');
-    final lastPromptStr = prefs.getString('last_prompt_$userKey');
-
-    if (dailyResetStr != null) {
-      _dailyResetTime = DateTime.parse(dailyResetStr);
-      if (DateTime.now().difference(_dailyResetTime!).inDays >= 1) {
-        _dailyPromptCount = 0;
-        _dailyResetTime = DateTime.now();
-      }
-    } else {
-      _dailyResetTime = DateTime.now();
-    }
-
-    if (lastPromptStr != null) {
-      _lastPromptTime = DateTime.parse(lastPromptStr);
-      if (DateTime.now().difference(_lastPromptTime!).inMinutes >= 5) {
-        _fiveMinutePromptCount = 0;
-      }
-    }
-  }
-
-  bool _checkUserLimits() {
-    final now = DateTime.now();
-
-    // Günlük sınır kontrolü - 6 mesaj
-    if (_dailyPromptCount >= 6) {
-      _addMessage('KET',
-          'Günlük mesaj sınırınıza ulaştınız (6 mesaj). Yarın tekrar deneyebilirsiniz.');
-      return false;
-    }
-
-    // 5 dakikalık sınır kontrolü - 2 mesaj
-    if (_lastPromptTime != null &&
-        now.difference(_lastPromptTime!).inMinutes < 5) {
-      if (_fiveMinutePromptCount >= 2) {
-        final remainingTime = 5 - now.difference(_lastPromptTime!).inMinutes;
-        _addMessage('KET',
-            '5 dakika içinde 2 mesaj sınırınıza ulaştınız. $remainingTime dakika sonra tekrar deneyebilirsiniz.');
-        return false;
-      }
-    } else {
-      _fiveMinutePromptCount = 0;
-    }
-
-    return true;
-  }
-
-  Future<void> _incrementPromptCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userKey = '${widget.userName}_${widget.userSurname}';
-    final now = DateTime.now();
-
-    _dailyPromptCount++;
-    _fiveMinutePromptCount++;
-    _lastPromptTime = now;
-
-    await prefs.setInt('daily_prompts_$userKey', _dailyPromptCount);
-    await prefs.setInt('five_min_prompts_$userKey', _fiveMinutePromptCount);
-    await prefs.setString(
-        'daily_reset_$userKey', _dailyResetTime!.toIso8601String());
-    await prefs.setString('last_prompt_$userKey', now.toIso8601String());
-  }
-
-  Future<String> _callGeminiAPI(String userMessage) async {
-    final relevantInfo = await _getRelevantInfo(userMessage);
-    final prompt =
-        '''Sen KET (Kırıkkale Üniversitesi Ekonomi Topluluğu) asistanısın. Kullanıcılara yardımcı ol.
-
-İlgili bilgiler: $relevantInfo
-
-Kullanıcı sorusu: ÖNEMLİ: Sadece yukarıdaki bilgiler çerçevesinde cevap ver. Bu bilgilerin dışına çıkma. Kullanıcı bir topluluk üyesi olduğunu varsay ve uygulamayı yönetme yetkisi olmadığını hatırlat. $userMessage
-
-Yukarıdaki bilgileri kullanarak Türkçe, samimi ve yardımsever bir şekilde cevap ver. Kendini KET asistanı olarak tanıt. Eğer sorun çözemezsen veya teknik bir problem varsa kullanıcıyı arifkerem71@gmail.com adresine yönlendir. Cevabını markdown formatında hazırla, başlıklar için #, listeler için - kullan.''';
-
-    final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$_apiKey');
-
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'contents': [
-          {
-            'parts': [
-              {'text': prompt}
-            ]
-          }
-        ]
-      }),
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['candidates'] != null && data['candidates'].isNotEmpty) {
-        return data['candidates'][0]['content']['parts'][0]['text'];
-      } else {
-        return 'Üzgünüm, yanıt oluşturamadım. Lütfen daha sonra tekrar deneyin.';
-      }
-    } else {
-      throw Exception('API hatası: ${response.statusCode} - ${response.body}');
-    }
-  }
-
-  void _clearChatHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final chatKey = 'chat_history_${widget.userName}_${widget.userSurname}';
-    await prefs.remove(chatKey);
-
-    setState(() {
-      _messages.clear();
-    });
-
-    _addMessage('KET',
-        'Sohbet geçmişi temizlendi. Merhaba ${widget.userName}! 👋 Size nasıl yardımcı olabilirim?',
-        isWelcome: true);
-  }
-
-  void _showLimitInfo() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.deepPurple.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child:
-                  Icon(Icons.info_outline, color: Colors.deepPurple.shade600),
-            ),
-            const SizedBox(width: 12),
-            const Text('Kullanım Sınırları', style: TextStyle(fontSize: 18)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade50,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Günlük mesaj:',
-                          style: TextStyle(fontWeight: FontWeight.w500)),
-                      Text('$_dailyPromptCount/50',
-                          style: TextStyle(
-                              color: Colors.deepPurple.shade600,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: _dailyPromptCount / 50,
-                    backgroundColor: Colors.grey.shade300,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.deepPurple.shade600),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('5 dakikadaki:',
-                          style: TextStyle(fontWeight: FontWeight.w500)),
-                      Text('$_fiveMinutePromptCount/10',
-                          style: TextStyle(
-                              color: Colors.deepPurple.shade600,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: _fiveMinutePromptCount / 10,
-                    backgroundColor: Colors.grey.shade300,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.deepPurple.shade600),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Bu sınırlar, sistem kaynaklarının adil kullanımı için konulmuştur.',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.deepPurple.shade600,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            ),
-            child: const Text('Tamam'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _isDarkMode ? Colors.grey[900] : const Color(0xFFF8F9FA),
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple.shade700,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.deepPurple.shade700, Colors.deepPurple.shade500],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                image: DecorationImage(
-                  image: AssetImage('assets/images/ketyapayzeka.png'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('KET Asistan',
-                      style: TextStyle(
-                          color: Colors.white,
+    return Column(
+      children: [
+        // Mesajlar listesi
+        Expanded(
+          child: _messages.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 60),
+                      Image(
+                        image: AssetImage('assets/images/ketyapayzeka.png'),
+                        height: 120,
+                      ),
+                      SizedBox(height: 24),
+                      Text(
+                        "KET Asistan'a Hoş Geldiniz!",
+                        style: TextStyle(
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16),
-                      overflow: TextOverflow.ellipsis),
-                  Text('Online',
-                      style: TextStyle(color: Colors.white70, fontSize: 11)),
-                ],
-              ),
-            ),
-          ],
+                          color: Colors.black87,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Text(
+                        "Ekonomi veya topluluk hakkında soru sorarak başlayın",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    return _MessageBubble(
+                      message: message["text"] as String,
+                      isUser: message["role"] == "user",
+                    );
+                  },
+                ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          PopupMenuButton<String>(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+
+        // Input alanı
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(color: Colors.grey[300]!),
             ),
-            color: _isDarkMode ? Colors.grey[800] : Colors.white,
-            onSelected: (value) {
-              switch (value) {
-                case 'theme':
-                  _toggleTheme();
-                  break;
-                case 'faq':
-                  _showFrequentQuestions();
-                  break;
-                case 'limits':
-                  _showLimitInfo();
-                  break;
-                case 'clear':
-                  _clearChatHistory();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'theme',
-                child: Row(
-                  children: [
-                    Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                        color: _isDarkMode ? Colors.white : Colors.black),
-                    const SizedBox(width: 12),
-                    Text('Tema değiştir',
-                        style: TextStyle(
-                            color: _isDarkMode ? Colors.white : Colors.black)),
-                  ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  decoration: InputDecoration(
+                    hintText: "KET Asistan'a bir soru sorun...",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
+                  ),
+                  onSubmitted: _sendMessage,
                 ),
               ),
-              PopupMenuItem(
-                value: 'faq',
-                child: Row(
-                  children: [
-                    Icon(Icons.help_outline,
-                        color: _isDarkMode ? Colors.white : Colors.black),
-                    const SizedBox(width: 12),
-                    Text('Sık sorulan sorular',
-                        style: TextStyle(
-                            color: _isDarkMode ? Colors.white : Colors.black)),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'limits',
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline,
-                        color: _isDarkMode ? Colors.white : Colors.black),
-                    const SizedBox(width: 12),
-                    Text('Kullanım sınırları',
-                        style: TextStyle(
-                            color: _isDarkMode ? Colors.white : Colors.black)),
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                value: 'clear',
-                child: Row(
-                  children: [
-                    const Icon(Icons.delete_outline, color: Colors.red),
-                    const SizedBox(width: 12),
-                    const Text('Sohbeti temizle',
-                        style: TextStyle(color: Colors.red)),
-                  ],
+              const SizedBox(width: 8),
+              FloatingActionButton(
+                onPressed: () => _sendMessage(_controller.text),
+                backgroundColor: Colors.deepPurple.shade600,
+                mini: true,
+                elevation: 2,
+                child: const Icon(
+                  Icons.send,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MessageBubble extends StatelessWidget {
+  final String message;
+  final bool isUser;
+
+  const _MessageBubble({
+    required this.message,
+    required this.isUser,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          if (!isUser)
+            const CircleAvatar(
+                backgroundColor: Color(0xFF1a237e),
+                radius: 20,
+                backgroundImage: AssetImage('assets/images/ketyapayzeka.png')),
+          if (!isUser) const SizedBox(width: 8),
+          Flexible(
+            child: _buildMessageContainer(context),
+          ),
+          if (isUser) const SizedBox(width: 8),
+          if (isUser)
+            const CircleAvatar(
+                backgroundColor: Colors.blueAccent,
+                radius: 20,
+                child: Icon(Icons.person, color: Colors.white, size: 20)),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                final isUser = message['sender'] == 'Sen';
-                final isWelcome = message['isWelcome'] == true;
+    );
+  }
 
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    mainAxisAlignment: isUser
-                        ? MainAxisAlignment.end
-                        : MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (!isUser) ...[
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                                color: Colors.deepPurple.shade200, width: 2),
-                            image: DecorationImage(
-                              image:
-                                  AssetImage('assets/images/ketyapayzeka.png'),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                      ],
-                      Flexible(
-                        child: GestureDetector(
-                          onLongPress: () {
-                            showModalBottomSheet(
-                              context: context,
-                              backgroundColor:
-                                  _isDarkMode ? Colors.grey[800] : Colors.white,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(
-                                    top: Radius.circular(20)),
-                              ),
-                              builder: (context) => Container(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    ListTile(
-                                      leading: Icon(Icons.copy,
-                                          color: _isDarkMode
-                                              ? Colors.white
-                                              : Colors.black),
-                                      title: Text('Kopyala',
-                                          style: TextStyle(
-                                              color: _isDarkMode
-                                                  ? Colors.white
-                                                  : Colors.black)),
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                        _copyMessage(message['message']!);
-                                      },
-                                    ),
-                                    if (!isUser && !isWelcome)
-                                      ListTile(
-                                        leading: Icon(Icons.volume_up,
-                                            color: _isDarkMode
-                                                ? Colors.white
-                                                : Colors.black),
-                                        title: Text('Sesli Oku',
-                                            style: TextStyle(
-                                                color: _isDarkMode
-                                                    ? Colors.white
-                                                    : Colors.black)),
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                          _speakText(message['message']!);
-                                        },
-                                      ),
-                                    if (!isWelcome)
-                                      ListTile(
-                                        leading: Icon(Icons.delete,
-                                            color: Colors.red),
-                                        title: Text('Sil',
-                                            style:
-                                                TextStyle(color: Colors.red)),
-                                        onTap: () {
-                                          Navigator.pop(context);
-                                          _deleteMessage(index);
-                                        },
-                                      ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                          child: Container(
-                            constraints: BoxConstraints(
-                              maxWidth:
-                                  MediaQuery.of(context).size.width * 0.75,
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              gradient: isUser
-                                  ? LinearGradient(
-                                      colors: [
-                                        Colors.deepPurple.shade600,
-                                        Colors.deepPurple.shade500
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : isWelcome
-                                      ? LinearGradient(
-                                          colors: _isDarkMode
-                                              ? [
-                                                  Colors.deepPurple.shade800,
-                                                  Colors.deepPurple.shade700
-                                                ]
-                                              : [
-                                                  Colors.deepPurple.shade50,
-                                                  Colors.deepPurple.shade100
-                                                ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        )
-                                      : null,
-                              color: isUser || isWelcome
-                                  ? null
-                                  : (_isDarkMode
-                                      ? Colors.grey[800]
-                                      : Colors.white),
-                              borderRadius: BorderRadius.only(
-                                topLeft: const Radius.circular(20),
-                                topRight: const Radius.circular(20),
-                                bottomLeft: Radius.circular(isUser ? 20 : 6),
-                                bottomRight: Radius.circular(isUser ? 6 : 20),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black
-                                      .withOpacity(_isDarkMode ? 0.3 : 0.08),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                              border: isUser || isWelcome
-                                  ? null
-                                  : Border.all(
-                                      color: _isDarkMode
-                                          ? Colors.grey.shade700
-                                          : Colors.grey.shade200,
-                                      width: 1,
-                                    ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (message['imagePath'] != null)
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Image.file(
-                                        File(message['imagePath']!),
-                                        width: 200,
-                                        height: 150,
-                                        fit: BoxFit.cover,
-                                      ),
-                                    ),
-                                  ),
-                                if (message['audioPath'] != null)
-                                  Container(
-                                    margin: const EdgeInsets.only(bottom: 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        IconButton(
-                                          icon: Icon(Icons.play_arrow,
-                                              color: isUser
-                                                  ? Colors.white
-                                                  : Colors.deepPurple),
-                                          onPressed: () =>
-                                              _playAudio(message['audioPath']!),
-                                        ),
-                                        Text('Sesli mesaj',
-                                            style: TextStyle(
-                                              color: isUser
-                                                  ? Colors.white70
-                                                  : Colors.grey.shade600,
-                                              fontSize: 14,
-                                            )),
-                                      ],
-                                    ),
-                                  ),
-                                Text(
-                                  message['message']!,
-                                  style: TextStyle(
-                                    color: isUser
-                                        ? Colors.white
-                                        : isWelcome
-                                            ? (_isDarkMode
-                                                ? Colors.white
-                                                : Colors.deepPurple.shade800)
-                                            : (_isDarkMode
-                                                ? Colors.white
-                                                : Colors.black87),
-                                    fontSize: 15,
-                                    height: 1.4,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _formatTime(message['time']!),
-                                  style: TextStyle(
-                                    color: isUser
-                                        ? Colors.white70
-                                        : (_isDarkMode
-                                            ? Colors.grey.shade400
-                                            : Colors.grey.shade600),
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      if (isUser) ...[
-                        const SizedBox(width: 12),
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.deepPurple.shade600,
-                                Colors.deepPurple.shade500
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(Icons.person,
-                              color: Colors.white, size: 18),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
-          if (_isLoading)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: Colors.deepPurple.shade200, width: 2),
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/ketyapayzeka.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.deepPurple.shade600),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text('KET düşünüyor...',
-                            style: TextStyle(
-                                color: Colors.grey.shade600, fontSize: 14)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _isDarkMode ? Colors.grey[900] : Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(_isDarkMode ? 0.3 : 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: SafeArea(
-              child: Column(
-                children: [
-                  if (_isRecording || _isListening)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.mic, color: Colors.red),
-                          const SizedBox(width: 8),
-                          Text(
-                              _isRecording
-                                  ? 'Kaydediliyor...'
-                                  : 'Dinleniyor...',
-                              style: TextStyle(
-                                  color: _isDarkMode
-                                      ? Colors.white
-                                      : Colors.black
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                            _isListening
-                                ? Icons.mic
-                                : _isRecording
-                                    ? Icons.stop
-                                    : Icons.mic_none,
-                            color: (_isListening || _isRecording)
-                                ? Colors.red
-                                : Colors.grey),
-                        onPressed:
-                            _isListening ? _toggleListening : _toggleRecording,
-                        onLongPress: _isRecording ? null : _toggleListening,
-                        tooltip: _isListening
-                            ? 'Dinlemeyi durdur'
-                            : _isRecording
-                                ? 'Kaydı durdur'
-                                : 'Kısa bas: Sesli mesaj, Uzun bas: Sesle sor',
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.photo, color: Colors.grey),
-                        onPressed: _pickImage,
-                        tooltip: 'Fotoğraf gönder',
-                      ),
-                      IconButton(
-                        icon: Icon(
-                            _isSpeaking ? Icons.volume_off : Icons.volume_up,
-                            color: _isSpeaking ? Colors.red : Colors.grey),
-                        onPressed: () {
-                          if (_messages.isNotEmpty) {
-                            final lastKetMessage =
-                                _messages.reversed.firstWhere(
-                              (msg) =>
-                                  msg['sender'] == 'KET' &&
-                                  msg['isWelcome'] != true,
-                              orElse: () => {},
-                            );
-                            if (lastKetMessage.isNotEmpty) {
-                              _speakText(lastKetMessage['message']!);
-                            }
-                          }
-                        },
-                        tooltip:
-                            _isSpeaking ? 'Okumayı durdur' : 'Son mesajı oku',
-                      ),
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: _isDarkMode
-                                ? Colors.grey[800]
-                                : const Color(0xFFF8F9FA),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                                color: _isDarkMode
-                                    ? Colors.grey.shade600
-                                    : Colors.grey.shade300),
-                          ),
-                          child: TextField(
-                            controller: _messageController,
-                            focusNode: _messageFocusNode,
-                            decoration: InputDecoration(
-                              hintText: 'KET\'e bir şey sor...',
-                              hintStyle: TextStyle(
-                                  color: _isDarkMode
-                                      ? Colors.grey.shade400
-                                      : Colors.grey.shade500),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 14),
-                              suffixIcon: Container(
-                                margin: const EdgeInsets.all(4),
-                                child: CircleAvatar(
-                                  backgroundColor: Colors.deepPurple.shade600,
-                                  child: IconButton(
-                                    icon: const Icon(Icons.send,
-                                        color: Colors.white, size: 18),
-                                    onPressed: _sendMessage,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            onSubmitted: (_) => _sendMessage(),
-                            maxLines: null,
-                            style: TextStyle(
-                                fontSize: 15,
-                                color:
-                                    _isDarkMode ? Colors.white : Colors.black),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+  Widget _buildMessageContainer(BuildContext context) {
+    final borderRadius = isUser
+        ? const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+            bottomLeft: Radius.circular(20),
+          )
+        : const BorderRadius.only(
+            topRight: Radius.circular(20),
+            topLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: isUser ? Colors.blueAccent : Colors.white,
+        borderRadius: borderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          )
         ],
+      ),
+      child: InkWell(
+        onLongPress: () {
+          Clipboard.setData(ClipboardData(text: message));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Mesaj panoya kopyalandı!')),
+          );
+        },
+        child: Text(
+          message,
+          style: TextStyle(
+            color: isUser ? Colors.white : Colors.black87,
+            fontSize: 15,
+            height: 1.4,
+          ),
+        ),
       ),
     );
   }
