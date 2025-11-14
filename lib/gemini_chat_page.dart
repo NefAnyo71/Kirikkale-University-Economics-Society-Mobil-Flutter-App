@@ -25,7 +25,7 @@ class GeminiChatPage extends StatelessWidget {
           children: [
             Image.asset(
               'assets/images/ketyapayzeka.png',
-              height: 32, // İkonun yüksekliğini ayarlayabilirsiniz
+              height: 32,
             ),
             const SizedBox(width: 12),
             const Text(
@@ -72,17 +72,14 @@ class _ChatBodyState extends State<ChatBody> {
   final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
-  // Bilgi haritasını state içine taşıdık
+  
   final Map<String, String> ekonomiTopluluguBilgileri = {
-    // Topluluk hakkında
     "topluluk nedir":
         "Ben KET Asistan, Kırıkkale Üniversitesi Ekonomi Topluluğu'nun dijital yardımcısıyım. Ekonomi alanında faaliyet gösteren bir öğrenci topluluğuyuz.",
     "topluluk amacı":
         "Ekonomi bilincini geliştirmek, seminerler düzenlemek ve öğrencileri ekonomi alanında bilgilendirmek.",
     "topluluk başkanı":
         "Topluluk başkanı hakkında güncel bilgi için ekonomi bölümüne danışabilirsiniz.",
-
-    // Ekonomi terimleri
     "enflasyon":
         "Enflasyon, mal ve hizmet fiyatlarının genel seviyesindeki sürekli artıştır.",
     "faiz": "Faiz, borç alınan paranın kullanımı için ödenen bedeldir.",
@@ -92,9 +89,7 @@ class _ChatBodyState extends State<ChatBody> {
         "Ekonomik büyüme, bir ekonominin üretim kapasitesindeki artıştır.",
     "ekonomi":
         "Ekonomi, sınırsız ihtiyaçların sınırlı kaynaklarla nasıl karşılanacağını inceleyen bilim dalıdır.",
-
-    // Üniversite bilgileri
-    "kırıkkale üniversitesi": // "kü" anahtarı ile birleştirilebilir
+    "kırıkkale üniversitesi":
         "Kırıkkale Üniversitesi, 1992 yılında kurulmuş devlet üniversitesidir.",
     "ekonomi bölümü":
         "İktisadi ve İdari Bilimler Fakültesi bünyesinde eğitim vermektedir.",
@@ -102,8 +97,6 @@ class _ChatBodyState extends State<ChatBody> {
         "Detaylı bilgi için üniversitenin resmi web sitesini ziyaret edebilirsiniz.",
     "kü":
         "Kırıkkale Üniversitesi, 1992 yılında kurulmuş köklü bir devlet üniversitesidir.",
-
-    // Genel ekonomi
     "makroekonomi": "Makroekonomi, ekonominin bir bütün olarak incelenmesidir.",
     "mikroekonomi":
         "Mikroekonomi, bireysel ekonomik birimlerin davranışlarını inceler.",
@@ -111,8 +104,6 @@ class _ChatBodyState extends State<ChatBody> {
         "İktisat, sınırsız ihtiyaçların sınırlı, ihtiyaçların sınırsız olduğu durumda optimal dağılımı inceler.",
     "gsyh":
         "GSYH (Gayri Safi Yurtiçi Hasıla), bir ülkenin belirli dönemde ürettiği nihai mal ve hizmetlerin toplam değeridir.",
-
-    // Selamlama ve diğerleri
     "merhaba": "Merhaba! Sana nasıl yardımcı olabilirim?",
     "selam": "Selam! Ekonomi veya topluluk hakkında bir sorun mu var?",
     "nasılsın":
@@ -123,7 +114,6 @@ class _ChatBodyState extends State<ChatBody> {
   void initState() {
     super.initState();
     initializeDateFormatting('tr_TR');
-    // İlk açılışta hoş geldin mesajı göster
     _showWelcomeMessage();
   }
 
@@ -137,11 +127,10 @@ class _ChatBodyState extends State<ChatBody> {
     }
   }
 
-  String _getRestrictedResponse(
+  String _getFlexibleResponse(
       String userInput, List<Map<String, dynamic>> upcomingEvents) {
     String lowerInput = userInput.toLowerCase();
 
-    // Kullanıcı kendisi hakkında soru soruyorsa
     if (lowerInput.contains("ben kimim") || lowerInput.contains("kimim ben")) {
       if (widget.userName != null &&
           widget.userSurname != null &&
@@ -156,7 +145,6 @@ class _ChatBodyState extends State<ChatBody> {
       }
     }
 
-    // Yaklaşan etkinlikler hakkında soru sorulursa
     if (lowerInput.contains("yaklaşan etkinlik") ||
         lowerInput.contains("gelecek etkinlik") ||
         lowerInput.contains("etkinlikler neler") ||
@@ -178,14 +166,12 @@ class _ChatBodyState extends State<ChatBody> {
       return eventList.trim();
     }
 
-    // Haritadaki anahtar kelimeleri kontrol et
     for (var entry in ekonomiTopluluguBilgileri.entries) {
       if (lowerInput.contains(entry.key)) {
         return entry.value;
       }
     }
 
-    // Özel durumlar
     if (lowerInput.contains("teşekkür") ||
         lowerInput.contains("sağ ol") ||
         lowerInput.contains("thanks")) {
@@ -193,23 +179,84 @@ class _ChatBodyState extends State<ChatBody> {
       if (widget.userName != null) {
         thanksMsg += " ${widget.userName}";
       }
-      thanksMsg +=
-          "! Başka sorunuz var mı? Ekonomi ile ilgili merak ettiklerinizi sormaktan çekinmeyin. 📈";
+      thanksMsg += "! Başka bir konuda yardımcı olabilir miyim? 😊";
       return thanksMsg;
-    } else if (lowerInput.contains("görüşürüz") ||
+    }
+
+    if (lowerInput.contains("görüşürüz") ||
         lowerInput.contains("hoşça kal") ||
         lowerInput.contains("bye")) {
       String goodbyeMsg = "Görüşmek üzere";
       if (widget.userName != null) {
         goodbyeMsg += " ${widget.userName}";
       }
-      goodbyeMsg +=
-          "! Kırıkkale Üniversitesi Ekonomi Topluluğu olarak başarılar dileriz. 🎯";
+      goodbyeMsg += "! İyi günler dilerim. 🌟";
       return goodbyeMsg;
     }
 
-    // Konu dışı sorular için
-    return "Üzgünüm, bu konuda bilgim yok. Sadece Kırıkkale Üniversitesi Ekonomi Topluluğu ve ekonomi ile ilgili konularda yardımcı olabilirim. \n\nLütfen şu konularda sorular sorun:\n• Ekonomi terimleri\n• Topluluk etkinlikleri\n• Üniversite bilgileri\n• Ekonomi teorileri";
+    if (lowerInput.contains("nasıl") && lowerInput.contains("yardım")) {
+      return "Size birçok konuda yardımcı olabilirim:\n\n• Ekonomi terimleri ve kavramları\n• Topluluk etkinlikleri ve duyurular\n• Üniversite hakkında genel bilgiler\n• Akademik konular\n• Genel sorularınız\n\nHangi konuda yardıma ihtiyacınız var?";
+    }
+
+    if (lowerInput.contains("naber") || lowerInput.contains("ne haber")) {
+      return "İyiyim, teşekkürler! Ekonomi dünyasındaki gelişmeleri takip ediyorum. Sen nasılsın? Hangi konuda sohbet etmek istersin?";
+    }
+
+    if (lowerInput.contains("hava durumu") || lowerInput.contains("hava")) {
+      return "Hava durumu hakkında güncel bilgim yok, ancak ekonomik iklim hakkında konuşabiliriz! 😄 Ekonomi ile ilgili merak ettiğin bir konu var mı?";
+    }
+
+    if (lowerInput.contains("ne yapıyorsun")) {
+      return "Şu anda sizinle sohbet ediyorum ve sorularınızı yanıtlamaya hazırım! Ekonomi, topluluk veya başka hangi konuda konuşmak istersiniz?";
+    }
+
+    if (lowerInput.contains("hesapla") || lowerInput.contains("matematik") || 
+        lowerInput.contains("çarp") || lowerInput.contains("böl") ||
+        lowerInput.contains("topla") || lowerInput.contains("çıkar")) {
+      return "Basit matematik işlemlerinde yardımcı olabilirim! Hangi hesaplamayı yapmak istiyorsunuz? Özellikle ekonomi ile ilgili hesaplamalarda size yardımcı olabilirim.";
+    }
+
+    if (lowerInput.contains("tarih") && !lowerInput.contains("etkinlik")) {
+      return "Tarih konusunda genel bilgiler verebilirim, özellikle ekonomi tarihi konularında. Hangi dönem veya olay hakkında bilgi almak istiyorsunuz?";
+    }
+
+    if (lowerInput.contains("kitap") || lowerInput.contains("okuma")) {
+      return "Ekonomi alanında okuyabileceğiniz harika kitaplar var! Hangi seviyede ve hangi konularda kitap önerisi istiyorsunuz? Mikroekonomi, makroekonomi, finans gibi...";
+    }
+
+    if (lowerInput.contains("film") || lowerInput.contains("dizi")) {
+      return "Ekonomi ve finans temalı filmler ve diziler oldukça ilginç olabiliyor! 'The Big Short', 'Wall Street', 'Billions' gibi yapımlar ekonomi dünyasını anlamamıza yardımcı olur. Hangi tür içerik arıyorsunuz?";
+    }
+
+    if (lowerInput.contains("motivasyon") || lowerInput.contains("başarı")) {
+      return "Başarı için sürekli öğrenme ve gelişim çok önemli! Ekonomi alanında kendinizi geliştirmek için topluluk etkinliklerimizi takip edebilir, kitap okuyabilir ve pratik yapabilirsiniz. Hangi alanda gelişmek istiyorsunuz?";
+    }
+
+    if (lowerInput.contains("kariyer") || lowerInput.contains("iş") || lowerInput.contains("meslek")) {
+      return "Ekonomi mezunları için birçok kariyer fırsatı var: bankacılık, finans, danışmanlık, kamu sektörü, akademi... Hangi alanda çalışmayı düşünüyorsunuz? Size o konuda bilgi verebilirim.";
+    }
+
+    if (lowerInput.contains("teknoloji") || lowerInput.contains("yapay zeka") || lowerInput.contains("ai")) {
+      return "Teknoloji ekonomiyi büyük ölçüde etkiliyor! Yapay zeka, blockchain, fintech gibi alanlar ekonominin geleceğini şekillendiriyor. Hangi teknoloji konusu ilginizi çekiyor?";
+    }
+
+    if (lowerInput.contains("spor") || lowerInput.contains("futbol") || lowerInput.contains("basketbol")) {
+      return "Spor da aslında büyük bir ekonomi! Spor ekonomisi, transfer piyasaları, sponsorluklar... İlginç bir alan. Spor ekonomisi hakkında bilgi almak ister misiniz?";
+    }
+
+    if (lowerInput.contains("yemek") || lowerInput.contains("kültür")) {
+      return "Kültür ve gastronomi de ekonominin önemli parçaları! Turizm ekonomisi, yerel kalkınma gibi konularda konuşabiliriz. Hangi açıdan yaklaşmak istersiniz?";
+    }
+
+    if (lowerInput.contains("ders") || lowerInput.contains("sınav") || lowerInput.contains("ödev")) {
+      return "Eğitim konularında yardımcı olmaya çalışabilirim! Hangi ders veya konu hakkında bilgi almak istiyorsunuz? Ekonomi derslerinizde size destek olabilirim.";
+    }
+
+    if (lowerInput.contains("yaşam") || lowerInput.contains("hayat") || lowerInput.contains("gelecek")) {
+      return "Yaşam ve gelecek planları önemli konular! Ekonomi bilgisi günlük hayatta da çok işe yarar. Kişisel finans, yatırım, bütçe yönetimi gibi konularda konuşabiliriz.";
+    }
+
+    return "İlginç bir soru! Bu konuda detaylı bilgim olmayabilir, ama elimden geldiğince yardımcı olmaya çalışırım. Daha spesifik bir soru sorarsanız veya ekonomi, topluluk, eğitim gibi konulara yönelirseniz size daha iyi yardımcı olabilirim. 😊\n\nBaşka hangi konularda konuşmak istersiniz?";
   }
 
   void _showWelcomeMessage() {
@@ -230,7 +277,7 @@ class _ChatBodyState extends State<ChatBody> {
           .collection('yaklasan_etkinlikler')
           .where('date', isGreaterThanOrEqualTo: Timestamp.now())
           .orderBy('date', descending: false)
-          .limit(3) // Sohbeti yormamak için ilk 3 etkinliği alalım
+          .limit(3)
           .get();
 
       return snapshot.docs.map((doc) => doc.data()).toList();
@@ -243,19 +290,15 @@ class _ChatBodyState extends State<ChatBody> {
   void _sendMessage(String text) async {
     if (text.isEmpty) return;
 
-    // Kullanıcı mesajını ekle
     setState(() {
       _messages.add({"role": "user", "text": text, "time": DateTime.now()});
     });
     _controller.clear();
     _scrollToBottom();
 
-    // Yaklaşan etkinlik verilerini çek
     final upcomingEvents = await _getUpcomingEvents();
-    // Kısıtlı yanıtı al
-    String response = _getRestrictedResponse(text, upcomingEvents);
+    String response = _getFlexibleResponse(text, upcomingEvents);
 
-    // Asistan yanıtını ekle (küçük gecikme ile)
     Future.delayed(const Duration(milliseconds: 500), () {
       setState(() {
         _messages.add(
@@ -282,7 +325,6 @@ class _ChatBodyState extends State<ChatBody> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Mesajlar listesi
         Expanded(
           child: _messages.isEmpty
               ? const Center(
@@ -328,8 +370,6 @@ class _ChatBodyState extends State<ChatBody> {
                   },
                 ),
         ),
-
-        // Input alanı
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(

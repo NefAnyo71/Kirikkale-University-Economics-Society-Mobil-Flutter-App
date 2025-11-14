@@ -53,7 +53,7 @@ class EtkinlikJson2 extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: Navigator.of(context).pop,
               child: const Text('İptal', style: TextStyle(color: Colors.black)),
             ),
           ],
@@ -181,39 +181,59 @@ class EtkinlikJson2 extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Yaklaşan Etkinlikler",
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 24,
-          ),
+        backgroundColor: Colors.deepPurple.shade700,
+        elevation: 4.0,
+        toolbarHeight: 80,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: Navigator.of(context).pop,
         ),
-        centerTitle: true,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF7C4DFF),
-                Color(0xFF18FFFF),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        title: Row(
+          children: [
+            // Asset image yerine placeholder - asset dosyanız varsa kullanın
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.event, color: Colors.deepPurple),
             ),
-          ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Yaklaşan Etkinlikler',
+                    style: TextStyle(
+                      fontSize: 18.0,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    'Gelecek Etkinlikler',
+                    style: TextStyle(
+                      fontSize: 14.0,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.3),
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF7C4DFF),
-              Color(0xFF18FFFF),
-            ],
+            colors: [Colors.deepPurple.shade50, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: StreamBuilder<QuerySnapshot>(
@@ -227,7 +247,7 @@ class EtkinlikJson2 extends StatelessWidget {
               return Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white.withOpacity(0.8),
+                    Colors.deepPurple.withOpacity(0.8),
                   ),
                   strokeWidth: 3,
                 ),
@@ -241,13 +261,13 @@ class EtkinlikJson2 extends StatelessWidget {
                     Icon(
                       Icons.event_available,
                       size: 60,
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.deepPurple.withOpacity(0.7),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       "Yaklaşan etkinlik bulunamadı",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.deepPurple.withOpacity(0.9),
                         fontSize: 22,
                         fontWeight: FontWeight.w500,
                       ),
@@ -256,7 +276,7 @@ class EtkinlikJson2 extends StatelessWidget {
                     Text(
                       "Yakında yeni etkinlikler eklenecek",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.deepPurple.withOpacity(0.8),
                         fontSize: 16,
                       ),
                     ),
@@ -300,153 +320,173 @@ class EtkinlikJson2 extends StatelessWidget {
                     ],
                   ),
                   child: Card(
-                    elevation: 0,
-                    color: Colors.white.withOpacity(0.95),
+                    elevation: 4,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    clipBehavior: Clip.antiAliasWithSaveLayer,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (url.isNotEmpty)
-                          SizedBox(
-                            height: 180,
-                            width: double.infinity,
-                            child: Stack(
+                        borderRadius: BorderRadius.circular(20.0)),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.white, Colors.grey.shade100],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(20.0),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.deepPurple.withOpacity(0.1),
+                            spreadRadius: 2,
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                        border: Border.all(
+                            color: Colors.deepPurple.shade100, width: 1.0),
+                      ),
+                      clipBehavior: Clip.antiAliasWithSaveLayer,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (url.isNotEmpty)
+                            SizedBox(
+                              height: 180,
+                              width: double.infinity,
+                              child: Stack(
+                                children: [
+                                  Image.network(
+                                    url,
+                                    height: 180,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        color: Colors.grey[200],
+                                        child: const Icon(Icons.error,
+                                            color: Colors.grey),
+                                      );
+                                    },
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black.withOpacity(0.5),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 12,
+                                    left: 16,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            Colors.blueAccent.withOpacity(0.9),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        "YAKLAŞAN ETKİNLİK",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Image.network(
-                                  url,
-                                  height: 180,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      color: Colors.grey[200],
-                                      child: const Icon(Icons.error,
-                                          color: Colors.grey),
-                                    );
-                                  },
+                                Text(
+                                  title,
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurple.shade900,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today,
+                                      size: 16,
+                                      color: Colors.deepPurple.shade600,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      formattedDate,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.deepPurple.shade600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  details,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[700],
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
                                 Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.transparent,
-                                        Colors.black.withOpacity(0.5),
-                                      ],
+                                    color: Colors.orange.withOpacity(0.9),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    'Kalan Süre: $remainingDays gün, $remainingHours saat, $remainingMinutes dakika',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                                Positioned(
-                                  bottom: 12,
-                                  left: 16,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blueAccent.withOpacity(0.9),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      "YAKLAŞAN ETKİNLİK",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.alarm_add,
+                                        color: Colors.white),
+                                    label: const Text('Alarm Kur',
+                                        style: TextStyle(color: Colors.white)),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Colors.deepPurple.shade600,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
+                                    onPressed: () {
+                                      _setAlarmForEvent(context, date, title);
+                                    },
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today,
-                                    size: 16,
-                                    color: Colors.grey[700],
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    formattedDate,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                details,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.black,
-                                  height: 1.4,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: Colors.orange.withOpacity(0.9),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  'Kalan Süre: $remainingDays gün, $remainingHours saat, $remainingMinutes dakika',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  icon: const Icon(Icons.alarm_add,
-                                      color: Colors.white),
-                                  label: const Text('Alarm Kur',
-                                      style: TextStyle(color: Colors.white)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.blue[800],
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    _setAlarmForEvent(context, date, title);
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 );

@@ -52,7 +52,8 @@ class MockCollectionReference {
 
 class MockFirebaseFirestore {
   MockFirebaseFirestore._privateConstructor();
-  static final MockFirebaseFirestore _instance = MockFirebaseFirestore._privateConstructor();
+  static final MockFirebaseFirestore _instance =
+      MockFirebaseFirestore._privateConstructor();
   factory MockFirebaseFirestore() {
     return _instance;
   }
@@ -91,7 +92,8 @@ class MockFirebaseFirestore {
         .toList();
   }
 
-  List<MockQueryDocumentSnapshot> queryDocuments(String collectionPath, String field, dynamic value) {
+  List<MockQueryDocumentSnapshot> queryDocuments(
+      String collectionPath, String field, dynamic value) {
     if (!_collections.containsKey(collectionPath)) {
       return [];
     }
@@ -118,12 +120,14 @@ class MockFirebaseFirestore {
       return;
     }
 
-    print('=== TÜM RAPORLAR (${_collections['haber_raporlari']!.length} adet) ===');
+    print(
+        '=== TÜM RAPORLAR (${_collections['haber_raporlari']!.length} adet) ===');
     for (final report in _collections['haber_raporlari']!) {
       print('Başlık: ${report['haber_basligi']}');
       print('Sebep: ${report['rapor_sebebi']}');
       print('Tarih: ${report['rapor_tarihi']}');
-      print('Rapor Sayısı: ${_collections['haber_raporlari']!.where((r) => r['haber_basligi'] == report['haber_basligi']).length}');
+      print(
+          'Rapor Sayısı: ${_collections['haber_raporlari']!.where((r) => r['haber_basligi'] == report['haber_basligi']).length}');
       print('---');
     }
   }
@@ -135,7 +139,8 @@ class MockUser {
 
 class MockFirebaseAuth {
   MockFirebaseAuth._privateConstructor();
-  static final MockFirebaseAuth _instance = MockFirebaseAuth._privateConstructor();
+  static final MockFirebaseAuth _instance =
+      MockFirebaseAuth._privateConstructor();
   factory MockFirebaseAuth() {
     return _instance;
   }
@@ -167,9 +172,9 @@ class NewsArticle {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-          other is NewsArticle &&
-              runtimeType == other.runtimeType &&
-              title == other.title;
+      other is NewsArticle &&
+          runtimeType == other.runtimeType &&
+          title == other.title;
 
   @override
   int get hashCode => title.hashCode;
@@ -215,15 +220,18 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
 
   Future<void> _loadReportTimestamps() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String> timestampsAsString = prefs.getStringList('reportTimestamps') ?? [];
+    final List<String> timestampsAsString =
+        prefs.getStringList('reportTimestamps') ?? [];
     _reportTimestamps = timestampsAsString.map(int.parse).toList();
     _reportTimestamps.removeWhere((timestamp) =>
-    DateTime.now().millisecondsSinceEpoch - timestamp > _reportPeriod.inMilliseconds);
+        DateTime.now().millisecondsSinceEpoch - timestamp >
+        _reportPeriod.inMilliseconds);
   }
 
   Future<void> _saveReportTimestamps() async {
     final prefs = await SharedPreferences.getInstance();
-    final List<String> timestampsAsString = _reportTimestamps.map((t) => t.toString()).toList();
+    final List<String> timestampsAsString =
+        _reportTimestamps.map((t) => t.toString()).toList();
     await prefs.setStringList('reportTimestamps', timestampsAsString);
   }
 
@@ -256,7 +264,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
   void _showDisclaimerDialog(BuildContext context) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final Color textColor = isDarkMode ? Colors.white70 : Colors.black87;
-    final Color subTextColor = isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
+    final Color subTextColor =
+        isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
 
     int _secondsRemaining = 6;
     Timer? _timer;
@@ -266,166 +275,176 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-            builder: (context, setState) {
-              if (_timer == null) {
-                _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-                  if (_secondsRemaining > 0) {
-                    setState(() {
-                      _secondsRemaining--;
-                    });
-                  } else {
-                    _timer?.cancel();
-                    setState(() {
-                      _canProceed = true;
-                    });
-                  }
+        return StatefulBuilder(builder: (context, setState) {
+          if (_timer == null) {
+            _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+              if (_secondsRemaining > 0) {
+                setState(() {
+                  _secondsRemaining--;
+                });
+              } else {
+                _timer?.cancel();
+                setState(() {
+                  _canProceed = true;
                 });
               }
+            });
+          }
 
-              return AlertDialog(
-                backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+          return AlertDialog(
+            backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            contentPadding: const EdgeInsets.all(24),
+            title: Column(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  color: Colors.blueAccent,
+                  size: 40,
                 ),
-                contentPadding: const EdgeInsets.all(24),
-                title: Column(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: Colors.blueAccent,
-                      size: 40,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Önemli Bilgilendirme',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 22,
-                        color: textColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-                content: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Bu uygulama, Anadolu Ajansı\'ndan gelen ekonomi haberlerini otomatik olarak filtreleyip sunar. '
-                            'Olası bir yanlış veya usulsüz haberden dolayı sorumluluk kabul edilmez. '
-                            '**Biz haberlere yorum katmıyoruz, olduğu gibi önünüze sunuyoruz.** Lütfen sadece usulsüz içerikleri raporlayın, biz de kaldıralım.',
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: subTextColor,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.justify,
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        '⚠️ Uyarılar',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          color: isDarkMode ? Colors.yellowAccent[700] : Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildDisclaimerPoint(
-                        text: 'Otomatik filtreleme kullanılır, nadiren yanlış haberler olabilir.',
-                        textColor: subTextColor,
-                      ),
-                      _buildDisclaimerPoint(
-                        text: 'Siyasi içerikli ekonomik haberler filtrelenmeye çalışılır.',
-                        textColor: subTextColor,
-                      ),
-                      _buildDisclaimerPoint(
-                        text: 'Yorum içeren veya yanlı olduğu düşünülen haberler kaldırılır.',
-                        textColor: subTextColor,
-                      ),
-                      _buildDisclaimerPoint(
-                        text: 'Haber içeriklerinin doğruluğundan sorumluluk kabul edilmez.',
-                        textColor: subTextColor,
-                      ),
-                      _buildDisclaimerPoint(
-                        text: 'Gözden kaçan içerikler için lütfen bizi bilgilendirin.',
-                        textColor: subTextColor,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: false,
-                            onChanged: _canProceed ? (value) async {
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setBool('showDisclaimer', false);
-                              _timer?.cancel();
-                              Navigator.of(context).pop();
-                            } : null,
-                          ),
-                          Expanded(
-                            child: Text(
-                              'Bir daha gösterme',
-                              style: TextStyle(
-                                color: subTextColor,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                const SizedBox(height: 16),
+                Text(
+                  'Önemli Bilgilendirme',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    color: textColor,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-                actions: [
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Bu uygulama, Anadolu Ajansı\'ndan gelen ekonomi haberlerini otomatik olarak filtreleyip sunar. '
+                    'Olası bir yanlış veya usulsüz haberden dolayı sorumluluk kabul edilmez. '
+                    '**Biz haberlere yorum katmıyoruz, olduğu gibi önünüze sunuyoruz.** Lütfen sadece usulsüz içerikleri raporlayın, biz de kaldıralım.',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: subTextColor,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.justify,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    '⚠️ Uyarılar',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color:
+                          isDarkMode ? Colors.yellowAccent[700] : Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildDisclaimerPoint(
+                    text:
+                        'Otomatik filtreleme kullanılır, nadiren yanlış haberler olabilir.',
+                    textColor: subTextColor,
+                  ),
+                  _buildDisclaimerPoint(
+                    text:
+                        'Siyasi içerikli ekonomik haberler filtrelenmeye çalışılır.',
+                    textColor: subTextColor,
+                  ),
+                  _buildDisclaimerPoint(
+                    text:
+                        'Yorum içeren veya yanlı olduğu düşünülen haberler kaldırılır.',
+                    textColor: subTextColor,
+                  ),
+                  _buildDisclaimerPoint(
+                    text:
+                        'Haber içeriklerinin doğruluğundan sorumluluk kabul edilmez.',
+                    textColor: subTextColor,
+                  ),
+                  _buildDisclaimerPoint(
+                    text:
+                        'Gözden kaçan içerikler için lütfen bizi bilgilendirin.',
+                    textColor: subTextColor,
+                  ),
+                  const SizedBox(height: 16),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(
-                        '$_secondsRemaining s',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Checkbox(
+                        value: false,
+                        onChanged: _canProceed
+                            ? (value) async {
+                                final prefs =
+                                    await SharedPreferences.getInstance();
+                                await prefs.setBool('showDisclaimer', false);
+                                _timer?.cancel();
+                                Navigator.of(context).pop();
+                              }
+                            : null,
                       ),
-                      const SizedBox(width: 10),
-                      TextButton(
-                        onPressed: _canProceed ? () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool('showDisclaimer', false);
-                          _timer?.cancel();
-                          if (mounted) {
-                            setState(() {
-                              _showDisclaimer = false;
-                            });
-                          }
-                          Navigator.of(context).pop();
-                        } : null,
+                      Expanded(
                         child: Text(
-                          'Anladım',
+                          'Bir daha gösterme',
                           style: TextStyle(
-                            color: _canProceed ? Colors.blueAccent : Colors.grey,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            color: subTextColor,
+                            fontSize: 14,
                           ),
                         ),
                       ),
                     ],
                   ),
                 ],
-              );
-            }
-        );
+              ),
+            ),
+            actions: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    '$_secondsRemaining s',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton(
+                    onPressed: _canProceed
+                        ? () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('showDisclaimer', false);
+                            _timer?.cancel();
+                            if (mounted) {
+                              setState(() {
+                                _showDisclaimer = false;
+                              });
+                            }
+                            Navigator.of(context).pop();
+                          }
+                        : null,
+                    child: Text(
+                      'Anladım',
+                      style: TextStyle(
+                        color: _canProceed ? Colors.blueAccent : Colors.grey,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        });
       },
     ).then((_) {
       _timer?.cancel();
     });
   }
 
-  Widget _buildDisclaimerPoint({required String text, required Color textColor}) {
+  Widget _buildDisclaimerPoint(
+      {required String text, required Color textColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -454,10 +473,15 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
 
         List<NewsArticle> fetchedArticles = items.map((item) {
           final title = item.findElements('title').firstOrNull?.text ?? '';
-          final content = item.findElements('description').firstOrNull?.text ?? '';
-          final date = _formatDate(item.findElements('pubDate').firstOrNull?.text ?? '');
+          final content =
+              item.findElements('description').firstOrNull?.text ?? '';
+          final date =
+              _formatDate(item.findElements('pubDate').firstOrNull?.text ?? '');
 
-          final mediaContent = item.findAllElements('content', namespace: 'http://search.yahoo.com/mrss/').firstOrNull;
+          final mediaContent = item
+              .findAllElements('content',
+                  namespace: 'http://search.yahoo.com/mrss/')
+              .firstOrNull;
           final imageUrl = mediaContent?.getAttribute('url') ?? '';
 
           return NewsArticle(
@@ -490,7 +514,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
     } on HttpException {
       setState(() {
         _isLoading = false;
-        _errorMessage = 'Haber sunucusuna ulaşılamadı. Lütfen daha sonra tekrar deneyin.';
+        _errorMessage =
+            'Haber sunucusuna ulaşılamadı. Lütfen daha sonra tekrar deneyin.';
       });
     } on FormatException {
       setState(() {
@@ -498,7 +523,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
         _errorMessage = 'Haber verisi formatı hatalı.';
       });
     } catch (e) {
-      final String errorMsg = 'Haberleri getirirken bilinmeyen bir hata oluştu: $e';
+      final String errorMsg =
+          'Haberleri getirirken bilinmeyen bir hata oluştu: $e';
       setState(() {
         _isLoading = false;
         _errorMessage = errorMsg;
@@ -506,7 +532,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
     }
   }
 
-  Future<List<NewsArticle>> _filterReportedNews(List<NewsArticle> articles) async {
+  Future<List<NewsArticle>> _filterReportedNews(
+      List<NewsArticle> articles) async {
     final filteredArticles = <NewsArticle>[];
 
     for (final article in articles) {
@@ -514,9 +541,11 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
 
       if (reportCount < _globalReportLimit) {
         filteredArticles.add(article);
-        print('✓ Haber gösterilecek: "${article.title}" (${reportCount} rapor)');
+        print(
+            '✓ Haber gösterilecek: "${article.title}" (${reportCount} rapor)');
       } else {
-        print('✗ Haber filtrelendi: "${article.title}" (${reportCount} rapor - limit: $_globalReportLimit)');
+        print(
+            '✗ Haber filtrelendi: "${article.title}" (${reportCount} rapor - limit: $_globalReportLimit)');
       }
     }
 
@@ -538,69 +567,105 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
   Widget build(BuildContext context) {
     final theme = _isDarkMode
         ? ThemeData.dark().copyWith(
-      scaffoldBackgroundColor: Colors.grey[900],
-      cardColor: Colors.grey[850],
-      cardTheme: CardTheme.of(context).copyWith(
-        elevation: 5,
-        shadowColor: Colors.black,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1E1E1E),
-        foregroundColor: Colors.white,
-        elevation: 0,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blueAccent,
-          foregroundColor: Colors.white,
-        ),
-      ),
-    )
+            scaffoldBackgroundColor: Colors.grey[900],
+            cardColor: Colors.grey[850],
+            cardTheme: CardTheme.of(context).copyWith(
+              elevation: 5,
+              shadowColor: Colors.black,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16))),
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFF1E1E1E),
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          )
         : ThemeData.light().copyWith(
-      scaffoldBackgroundColor: const Color(0xFFF0F2F5),
-      cardColor: Colors.white,
-      cardTheme: CardTheme.of(context).copyWith(
-        elevation: 3,
-        shadowColor: Colors.black26,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(16))),
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFFFFFFF),
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-        ),
-      ),
-    );
+            scaffoldBackgroundColor: const Color(0xFFF0F2F5),
+            cardColor: Colors.white,
+            cardTheme: CardTheme.of(context).copyWith(
+              elevation: 3,
+              shadowColor: Colors.black26,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16))),
+            ),
+            appBarTheme: const AppBarTheme(
+              backgroundColor: Color(0xFFFFFFFF),
+              foregroundColor: Colors.black,
+              elevation: 0,
+            ),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+            ),
+          );
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: theme,
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Güncel Ekonomi Haberleri',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 22,
-              )),
-          actions: [
-            IconButton(
-              icon: Icon(_isDarkMode ? Icons.light_mode : Icons.dark_mode),
-              onPressed: _toggleDarkMode,
-              tooltip: _isDarkMode ? 'Aydınlık moda geç' : 'Karanlık moda geç',
-            ),
-          ],
+          backgroundColor: Colors.deepPurple.shade700,
+          elevation: 4.0,
+          toolbarHeight: 80,
+          title: Row(
+            children: [
+              Image.asset('assets/images/ekoslogo.png', height: 40),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Güncel Ekonomi',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Anadolu Ajansı Haberleri',
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        body: _isLoading
-            ? _buildLoadingIndicator()
-            : _newsList.isEmpty
-            ? _buildEmptyState()
-            : _buildNewsList(),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.deepPurple.shade50, Colors.white],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: _isLoading
+              ? _buildLoadingIndicator()
+              : _newsList.isEmpty
+                  ? _buildEmptyState()
+                  : _buildNewsList(),
+        ),
       ),
     );
   }
@@ -651,7 +716,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
             ElevatedButton(
               onPressed: _fetchNewsFromRss,
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -683,7 +749,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20.0),
             color: Colors.redAccent,
-            child: const Icon(Icons.report_problem, color: Colors.white, size: 30),
+            child:
+                const Icon(Icons.report_problem, color: Colors.white, size: 30),
           ),
           confirmDismiss: (direction) async {
             if (direction == DismissDirection.startToEnd) {
@@ -727,7 +794,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
     }
   }
 
-  void _showReportReasons(BuildContext context, NewsArticle article, int originalIndex) {
+  void _showReportReasons(
+      BuildContext context, NewsArticle article, int originalIndex) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -763,7 +831,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
               _buildReportOption(context, 'Diğer', article),
               const Divider(),
               ListTile(
-                leading: Icon(Icons.undo, color: isDarkMode ? Colors.blue[300] : Colors.blue),
+                leading: Icon(Icons.undo,
+                    color: isDarkMode ? Colors.blue[300] : Colors.blue),
                 title: Text('İptal Et ve Geri Al',
                     style: TextStyle(
                         color: isDarkMode ? Colors.white70 : Colors.black87)),
@@ -785,15 +854,19 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
     );
   }
 
-  Widget _buildReportOption(BuildContext context, String reason, NewsArticle article) {
+  Widget _buildReportOption(
+      BuildContext context, String reason, NewsArticle article) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return ListTile(
-      leading: Icon(Icons.report_problem, color: isDarkMode ? Colors.red[300] : Colors.red),
-      title: Text(reason, style: TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87)),
+      leading: Icon(Icons.report_problem,
+          color: isDarkMode ? Colors.red[300] : Colors.red),
+      title: Text(reason,
+          style:
+              TextStyle(color: isDarkMode ? Colors.white70 : Colors.black87)),
       onTap: () async {
         final now = DateTime.now().millisecondsSinceEpoch;
-        _reportTimestamps.removeWhere((timestamp) =>
-        now - timestamp > _reportPeriod.inMilliseconds);
+        _reportTimestamps.removeWhere(
+            (timestamp) => now - timestamp > _reportPeriod.inMilliseconds);
 
         if (_reportTimestamps.length >= _reportLimit) {
           Navigator.pop(context);
@@ -826,7 +899,8 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('"${article.title}" adlı haber, "$reason" sebebiyle raporlandı.'),
+            content: Text(
+                '"${article.title}" adlı haber, "$reason" sebebiyle raporlandı.'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -842,96 +916,114 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
   Widget _buildNewsCard(BuildContext context, NewsArticle article) {
     return Card(
       margin: const EdgeInsets.only(bottom: 20.0),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => NewsDetailPage(article: article, isDarkMode: _isDarkMode),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.0)),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, Colors.grey.shade100],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(20.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.deepPurple.withOpacity(0.1),
+              spreadRadius: 2,
+              blurRadius: 10,
+              offset: const Offset(0, 5),
             ),
-          );
-        },
-        borderRadius: BorderRadius.circular(16.0),
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (article.imageUrl.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0),
-                  child: Image.network(
-                    article.imageUrl,
-                    fit: BoxFit.cover,
-                    height: 200,
-                    width: double.infinity,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
-                              : null,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
-                        ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) =>
-                        Container(
-                          height: 200,
-                          color: Colors.grey[200],
-                          child: Center(
-                            child: Icon(Icons.broken_image, color: Colors.grey[400]),
+          ],
+          border: Border.all(color: Colors.deepPurple.shade100, width: 1.0),
+        ),
+        child: InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    NewsDetailPage(article: article),
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(20.0),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (article.imageUrl.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: Image.network(
+                      article.imageUrl,
+                      fit: BoxFit.cover,
+                      height: 200,
+                      width: double.infinity,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.blueAccent),
                           ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 200,
+                        color: Colors.grey[200],
+                        child: Center(
+                          child:
+                              Icon(Icons.broken_image, color: Colors.grey[400]),
                         ),
-                  ),
-                ),
-
-              const SizedBox(height: 16.0),
-
-              Text(
-                article.title,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20.0,
-                  color: _isDarkMode ? Colors.white : Colors.black,
-                  height: 1.4,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 16.0),
-
-              Text(
-                _cleanContent(article.content),
-                style: TextStyle(
-                  color: _isDarkMode ? Colors.grey[400] : Colors.grey[700],
-                  height: 1.5,
-                  fontSize: 15.0,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-
-              const SizedBox(height: 16.0),
-
-              Row(
-                children: [
-                  Icon(Icons.access_time,
-                      size: 16,
-                      color: _isDarkMode ? Colors.grey[500] : Colors.grey[600]),
-                  const SizedBox(width: 6),
-                  Text(
-                    article.date,
-                    style: TextStyle(
-                      fontSize: 14.0,
-                      color: _isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                const SizedBox(height: 16.0),
+                Text(
+                  article.title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18.0,
+                    color: Colors.deepPurple.shade900,
+                    height: 1.4,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16.0),
+                Text(
+                  _cleanContent(article.content),
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    height: 1.5,
+                    fontSize: 15.0,
+                  ),
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 16.0),
+                Row(
+                  children: [
+                    Icon(Icons.access_time,
+                        size: 16, color: Colors.deepPurple.shade600),
+                    const SizedBox(width: 6),
+                    Text(
+                      article.date,
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        color: Colors.deepPurple.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -948,34 +1040,55 @@ class CurrentEconomyPageState extends State<CurrentEconomyPage> {
 
 class NewsDetailPage extends StatelessWidget {
   final NewsArticle article;
-  final bool isDarkMode;
 
-  const NewsDetailPage({super.key, required this.article, required this.isDarkMode});
+  const NewsDetailPage(
+      {super.key, required this.article});
 
   @override
   Widget build(BuildContext context) {
-    final theme = isDarkMode ? ThemeData.dark() : ThemeData.light();
-    final textColor = isDarkMode ? Colors.white : Colors.black87;
-    final subTextColor = isDarkMode ? Colors.grey[400] : Colors.grey[600];
-    final sourceContainerColor = isDarkMode ? Colors.grey[800] : Colors.grey[50];
-    final sourceTextColor = isDarkMode ? Colors.grey[400] : Colors.grey[600];
+    final textColor = Colors.black87;
+    final subTextColor = Colors.grey[600];
+    final sourceContainerColor = Colors.grey[50];
+    final sourceTextColor = Colors.grey[600];
 
-    return Theme(
-      data: theme,
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
-          title: const Text('Haber Detayları',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-              )),
-          backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
-          foregroundColor: isDarkMode ? Colors.white : Colors.black,
-          elevation: 0,
+          backgroundColor: Colors.deepPurple.shade700,
+          elevation: 4.0,
+          toolbarHeight: 80,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          title: Row(
+            children: [
+              Image.asset('assets/images/ekoslogo.png', height: 40),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Haber Detayı',
+                      style: TextStyle(
+                        fontSize: 18.0,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      'Anadolu Ajansı',
+                      style: TextStyle(
+                        fontSize: 14.0,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
         body: SingleChildScrollView(
@@ -993,25 +1106,20 @@ class NewsDetailPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16.0),
-
               Row(
                 children: [
-                  Icon(Icons.access_time,
-                      size: 18,
-                      color: subTextColor),
+                  Icon(Icons.access_time, size: 18, color: subTextColor),
                   const SizedBox(width: 8),
                   Text(
                     article.date,
                     style: TextStyle(
                         fontSize: 16.0,
                         color: subTextColor,
-                        fontWeight: FontWeight.w500
-                    ),
+                        fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
               const SizedBox(height: 24.0),
-
               if (article.imageUrl.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12.0),
@@ -1026,17 +1134,18 @@ class NewsDetailPage extends StatelessWidget {
                         child: CircularProgressIndicator(
                           value: loadingProgress.expectedTotalBytes != null
                               ? loadingProgress.cumulativeBytesLoaded /
-                              loadingProgress.expectedTotalBytes!
+                                  loadingProgress.expectedTotalBytes!
                               : null,
-                          valueColor: const AlwaysStoppedAnimation<Color>(Colors.blueAccent),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                              Colors.blueAccent),
                         ),
                       );
                     },
-                    errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                    errorBuilder: (context, error, stackTrace) =>
+                        const SizedBox.shrink(),
                   ),
                 ),
               const SizedBox(height: 24.0),
-
               Text(
                 _cleanContent(article.content),
                 style: TextStyle(
@@ -1047,7 +1156,6 @@ class NewsDetailPage extends StatelessWidget {
                 textAlign: TextAlign.justify,
               ),
               const SizedBox(height: 32.0),
-
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16.0),
@@ -1055,7 +1163,7 @@ class NewsDetailPage extends StatelessWidget {
                   color: sourceContainerColor,
                   borderRadius: BorderRadius.circular(12.0),
                   border: Border.all(
-                    color: isDarkMode ? Colors.grey[700]! : Colors.grey[200]!,
+                    color: Colors.grey[200]!,
                   ),
                 ),
                 child: Text(
@@ -1071,7 +1179,6 @@ class NewsDetailPage extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 

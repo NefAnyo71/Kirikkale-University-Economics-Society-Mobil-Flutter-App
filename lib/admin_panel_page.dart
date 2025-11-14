@@ -15,11 +15,12 @@ import 'admin_survey_page.dart';
 import 'uye_kayit_bilgileri.dart';
 import 'admin_logs_viewer_page.dart';
 import 'admin_ai_assistant.dart';
-import 'native_biometric_service.dart';
+import 'backgrounds/native_biometric_service.dart';
 import 'admin_credit_management.dart';
 import 'admin_user_validation.dart';
 import 'admin_note_approval.dart';
 import 'boluGezisiPageAdmin.dart';
+import 'boluGezisiYoklama.dart';
 import 'tanisma_etkinligi_basvurulari_page.dart';
 import 'kapi_gorevlisi_kontrol_page.dart';
 
@@ -609,7 +610,13 @@ class _AdminDashboard extends StatelessWidget {
             'Bolu Gezisi',
             Icons.storage,
             const BoluGezisiPage(),
-          )
+          ),
+          _buildAdminButton(
+            context,
+            'Bolu Gezisi Yoklama',
+            Icons.person,
+            const BoluGezisiYoklama(), 
+          ),
         ],
       ),
     );

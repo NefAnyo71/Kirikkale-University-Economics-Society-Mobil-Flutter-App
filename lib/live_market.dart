@@ -7,7 +7,7 @@ import 'dart:async';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'dart:math';
 
-// Data model for the chart, now includes OHLC data for candlesticks
+
 class ChartData {
   ChartData(this.time, this.open, this.high, this.low, this.close);
   final DateTime time;
@@ -21,10 +21,10 @@ class LiveMarketPage extends StatefulWidget {
   const LiveMarketPage({super.key});
 
   @override
-  _LiveMarketPageState createState() => _LiveMarketPageState();
+  LiveMarketPageState createState() => LiveMarketPageState();
 }
 
-class _LiveMarketPageState extends State<LiveMarketPage>
+class LiveMarketPageState extends State<LiveMarketPage>
     with TickerProviderStateMixin {
   TabController? _tabController;
   late AnimationController _controller;
@@ -38,7 +38,6 @@ class _LiveMarketPageState extends State<LiveMarketPage>
   String _searchQuery = '';
 
 
-  // Yeni: Seçilen öğeleri tutmak için Set kullanılıyor
   final Set<String> _selectedItems = {};
   final Map<String, dynamic> _selectedItemData = {};
 
@@ -64,7 +63,6 @@ class _LiveMarketPageState extends State<LiveMarketPage>
     'picoin': Icons.currency_exchange,
   };
 
-  // Sadece Türk hisselerini içerecek şekilde güncellendi.
   final Map<String, IconData> _stockIcons = {
     'XU100': Icons.show_chart,
     'GARAN': Icons.account_balance,
@@ -117,8 +115,6 @@ class _LiveMarketPageState extends State<LiveMarketPage>
         throw Exception('Failed to load crypto data.');
       }
 
-      // Amerikan hisseleri kaldırıldı ve yerine daha fazla Türk hissesi eklendi.
-      // Veriler simülasyon amaçlıdır.
       await Future.delayed(const Duration(seconds: 1));
       stockData = [
         {'symbol': 'XU100', 'name': 'BIST 100', 'price': 8543.67, 'change': 1.23, 'volume': 23456789, 'isCrypto': false},
@@ -141,7 +137,6 @@ class _LiveMarketPageState extends State<LiveMarketPage>
         {'symbol': 'KOZAL', 'name': 'Koza Altın', 'price': 250.25, 'change': -0.90, 'volume': 1098765, 'isCrypto': false},
       ];
 
-      // Add Pi Coin to the crypto list
       final piCoinData = {
         'symbol': 'PI',
         'name': 'Pi Network',
@@ -170,14 +165,13 @@ class _LiveMarketPageState extends State<LiveMarketPage>
     double priceValue = price is int ? price.toDouble() : price;
 
     if (isCrypto) {
-      // For cryptocurrencies, show in USDT with appropriate decimal places
+
       if (priceValue > 1) {
         return '${NumberFormat("#,##0.00").format(priceValue)} USDT';
       } else {
         return '${NumberFormat("#,##0.000000").format(priceValue)} USDT';
       }
     } else {
-      // For stocks, show in TL
       if (priceValue > 1) {
         return '${NumberFormat.currency(symbol: '₺', decimalDigits: 2).format(priceValue)}';
       } else {
@@ -438,9 +432,9 @@ class _LiveMarketPageState extends State<LiveMarketPage>
     String formattedValue = value;
     if (title == '24h Volume' || title == 'Market Cap') {
       if (isCrypto) {
-        formattedValue = '\$$value'; // For crypto, show in USD
+        formattedValue = '\$$value'; 
       } else {
-        formattedValue = '₺$value'; // For Turkish stocks, show in TL
+        formattedValue = '₺$value'; 
       }
     }
 
@@ -860,15 +854,12 @@ class _ChartPageState extends State<ChartPage> with SingleTickerProviderStateMix
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
             tabs: _timeFrames.map((e) => Tab(text: e)).toList(),
-            onTap: (index) {
-              // You can add logic here to fetch new data based on the selected time frame
-            },
           ),
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: _timeFrames.map((timeFrame) {
-                // The index is the same as the tab index
+
                 int index = _timeFrames.indexOf(timeFrame);
                 return Padding(
                   padding: const EdgeInsets.all(8.0),

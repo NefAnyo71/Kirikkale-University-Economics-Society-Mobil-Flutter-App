@@ -47,12 +47,9 @@ class _CreditDisplayWidgetState extends State<CreditDisplayWidget> {
   }
 
   void _loadRewardedAd() {
-    // Reklam yüklemeyi devre dışı bırak (performans için)
-    // RewardedAd.load(...)
   }
 
   void _showRewardedAd() {
-    // Basit kredi ekleme (reklam olmadan test için)
     CreditService.addCreditsForAd(widget.userEmail).then((success) {
       if (success) {
         _loadUserCredits();
@@ -97,7 +94,6 @@ class _CreditDisplayWidgetState extends State<CreditDisplayWidget> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
-          // Ana kredi göstergesi (her zaman görünür, küçük)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -131,7 +127,6 @@ class _CreditDisplayWidgetState extends State<CreditDisplayWidget> {
                 ),
                 Row(
                   children: [
-                    // Reklam izle butonu
                     IconButton(
                       onPressed: _isRewardedAdReady ? _showRewardedAd : null,
                       icon: Icon(
@@ -141,7 +136,6 @@ class _CreditDisplayWidgetState extends State<CreditDisplayWidget> {
                       ),
                       tooltip: 'Reklam İzle (5 reklam = 1 kredi)',
                     ),
-                    // Genişlet/daralt butonu
                     IconButton(
                       onPressed: () {
                         setState(() {
@@ -159,7 +153,6 @@ class _CreditDisplayWidgetState extends State<CreditDisplayWidget> {
             ),
           ),
 
-          // Detaylı bilgiler (genişletildiğinde görünür)
           if (_isExpanded)
             Container(
               padding: const EdgeInsets.all(16),
@@ -190,7 +183,6 @@ class _CreditDisplayWidgetState extends State<CreditDisplayWidget> {
                       Icons.thumb_down),
                   const SizedBox(height: 16),
 
-                  // Kredi kazanma bilgileri
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(

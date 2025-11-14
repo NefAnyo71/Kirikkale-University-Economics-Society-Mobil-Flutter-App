@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'feedback.dart';
 import 'current_economy.dart';
@@ -27,20 +25,28 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'gemini_chat_page.dart';
 import 'weather_service.dart';
-import 'services/app_update_service.dart';
 import 'services/credit_service.dart';
+import 'pages/banscreen.dart';
+import 'backgrounds/initializeBackgroundTasks.dart';
+// import 'backgrounds/testNotification.dart';
+import 'backgrounds/userRegister.dart';
+import 'backgrounds/userCheck.dart';
+import 'widgets/buildGridButton.dart';
+import 'widgets/buildGridButtonWithBadge.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    await dotenv.load(fileName: ".env");
-    print('✅ Environment variables yüklendi');
+    /* await dotenv.load(fileName: ".env");
+    print('✅ Environment variables yüklendi'); */
+    //api güvenliği için düşünücektim bir .env de şifrelemeyi
+    // ama proxyserver kurmak daha mantıklı geldi
 
     await Firebase.initializeApp();
     print('✅ Firebase başlatıldı');
@@ -53,162 +59,12 @@ void main() async {
 
     runApp(const KetApp());
 
-    _initializeBackgroundTasks();
+    initializeBackgroundTasks();
   } catch (error) {
     print('❌ Başlatma hatası: $error');
     runApp(const KetApp());
   }
 }
-
-Future<void> _initializeBackgroundTasks() async {
-  try {
-    AppUpdateService.checkForUpdate();
-    _bildirimIzinleri();
-    _fCMTokeniAl();
-    print('✅ Arka plan görevleri başlatıldı');
-  } catch (e) {
-    print('❌ Arka plan görev hatası: $e');
-  }
-}
-
-Future<void> _bildirimIzinleri() async {
-  try {
-    PermissionStatus notificationStatus =
-        await Permission.notification.request();
-    if (notificationStatus.isGranted) {
-      print("Bildirim izni verildi!");
-    }
-
-    PermissionStatus storageStatus = await Permission.storage.request();
-    if (storageStatus.isGranted) {
-      print("Depolama izni verildi!");
-    }
-  } catch (e) {
-    print('İzin hatası: $e');
-  }
-}
-
-Future<void> _fCMTokeniAl() async {
-  try {
-    String? token = await FirebaseMessaging.instance.getToken();
-    print("Firebase Token: $token");
-  } catch (e) {
-    print('FCM Token alma hatası: $e');
-  }
-}
-
-Future<void> _kullaniciFirebaseKayit(
-    String email, String password, String name, String surname) async {
-  try {
-    await _firestore.collection('üyelercollection').doc(email).set({
-      'email': email,
-      'password': password,
-      'name': name,
-      'surname': surname,
-      'hesapEngellendi': 0,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-    print('Kullanıcı Firestore\'a kaydedildi: $email');
-  } catch (e) {
-    print('Firestore kayıt hatası: $e');
-  }
-}
-
-Future<Map<String, dynamic>> _kullaniciFirebaseKontrol(
-    String email, String password) async {
-  try {
-    final doc =
-        await _firestore.collection('üyelercollection').doc(email).get();
-    if (doc.exists) {
-      final userData = doc.data() as Map<String, dynamic>;
-      final hesapEngellendi = userData['hesapEngellendi'] ?? 0;
-
-      return {
-        'isValid': userData['password'] == password,
-        'hesapEngellendi': hesapEngellendi,
-        'userData': userData
-      };
-    }
-    return {'isValid': false, 'hesapEngellendi': 0};
-  } catch (e) {
-    print('Firestore doğrulama hatası: $e');
-    return {'isValid': false, 'hesapEngellendi': 0};
-  }
-}
-
-class HesapEngellemeEkrani extends StatelessWidget {
-  const HesapEngellemeEkrani({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.block,
-                size: 64,
-                color: Colors.red,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Hesabınız Engellendi',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Yönetici tarafından engellendiniz.\n\n'
-                'Olası bir sorunda lütfen aşağıdaki e-posta adresi ile iletişime geçiniz:',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'arifkerem71@gmail.com',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blue,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 30),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                    builder: (context) => const BasitGirisEkrani(),
-                  ));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                ),
-                child: const Text(
-                  'Çıkış Yap',
-                  style: TextStyle(fontSize: 16, color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class BasitGirisEkrani extends StatefulWidget {
   const BasitGirisEkrani({super.key});
 
@@ -359,7 +215,7 @@ class _GirisSayfasi extends State<BasitGirisEkrani> {
       final email = _emailController.text;
       final password = _passwordController.text;
 
-      final validationResult = await _kullaniciFirebaseKontrol(email, password);
+      final validationResult = await kullaniciFirebaseKontrol(email, password);
 
       if (validationResult['isValid'] == true) {
         final hesapEngellendi = validationResult['hesapEngellendi'] ?? 0;
@@ -418,7 +274,7 @@ class _GirisSayfasi extends State<BasitGirisEkrani> {
       final surname = _surnameController.text;
 
       try {
-        await _kullaniciFirebaseKayit(email, password, name, surname);
+        await kullaniciFirebaseKayit(email, password, name, surname);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('email', email);
         await prefs.setString('password', password);
@@ -594,7 +450,7 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
   void _listenForBanStatus() {
     _userStatusSubscription?.cancel();
 
-    _userStatusSubscription = _firestore
+    _userStatusSubscription = firestore
         .collection('üyelercollection')
         .doc(_userEmail)
         .snapshots()
@@ -700,22 +556,6 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
     }
   }
 
-  Future<void> _testBildirimiGonder() async {
-    await NotificationService.sendTestNotification();
-    await NotificationService.checkForEventsAndSendNotification();
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              '🔔 Test bildirimi gönderildi ve etkinlik kontrolü yapıldı!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    }
-  }
-
   Future<void> _loadWeatherData() async {
     // print('🌤️ Hava durumu yükleniyor...');
     final weather = await WeatherService.getCurrentWeather();
@@ -805,6 +645,9 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.deepPurple.shade700,
@@ -843,11 +686,9 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
         actions: [
           GestureDetector(
             onTap: () {
-              // print('🌤️ Hava durumu yenileniyor...');
               _loadWeatherData();
             },
             onLongPress: () async {
-              // print('🔔 Bildirim sistemi kontrolü...');
               await NotificationService.checkForEventsAndSendNotification();
             },
             child: Container(
@@ -929,25 +770,25 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
                 crossAxisSpacing: 12.0,
                 mainAxisSpacing: 12.0,
                 children: <Widget>[
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Ders Notu Paylaşım Sistemi',
                     Icons.menu_book,
                     DersNotlari1(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Ders Notlarım',
                     Icons.menu_book,
                     DersNotlarim(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Etkinlik Takvimi',
                     Icons.calendar_today,
                     EtkinlikJson(),
                   ),
-                  _buildGridButtonWithBadge(
+                  buildGridButtonWithBadge(
                     context,
                     'Yaklaşan Etkinlikler',
                     Icons.calendar_today,
@@ -955,49 +796,49 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
                     _eventNotificationCount,
                     _clearNotificationCount,
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Topluluk Haberleri',
                     Icons.newspaper,
                     const CommunityNews2Page(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Sosyal Medya',
                     Icons.share,
                     const SocialMediaPage(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Güncel Ekonomi',
                     Icons.bar_chart,
                     const CurrentEconomyPage(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Canlı Piyasa',
                     Icons.show_chart,
                     LiveMarketPage(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Sponsorlar',
                     Icons.business,
                     SponsorsPage(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Anket Butonu',
                     Icons.poll,
                     SurveyPage(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Yönetici Paneli',
                     Icons.admin_panel_settings,
                     AdminPanelPage(),
                   ),
-                  _buildGridButton(
+                  buildGridButton(
                     context,
                     'Geri Bildirim',
                     Icons.feedback,
@@ -1024,8 +865,8 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
           clipBehavior: Clip.none,
           children: [
             SizedBox(
-              width: 80,
-              height: 80,
+              width: screenWidth * 0.2, // 80
+              height: screenWidth * 0.2, // 80
               child: FloatingActionButton(
                 onPressed: () {
                   Navigator.push(
@@ -1041,8 +882,8 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
                 },
                 backgroundColor: Colors.transparent,
                 child: Container(
-                  width: 115,
-                  height: 115,
+                  width: screenWidth * 0.28, // 115
+                  height: screenWidth * 0.28, // 115
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.3),
                     shape: BoxShape.rectangle,
@@ -1068,10 +909,10 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
             ),
             if (_showKetMessage)
               Positioned(
-                right: 90,
-                bottom: 20,
+                right: screenWidth * 0.22, // 90
+                bottom: screenHeight * 0.025, // 20
                 child: Container(
-                  width: 200,
+                  width: screenWidth * 0.5, // 200
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -1119,53 +960,6 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGridButton(
-      BuildContext context, String title, IconData icon, Widget page) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.grey.shade100],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.deepPurple.withOpacity(0.1),
-              spreadRadius: 2,
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-          border: Border.all(color: Colors.deepPurple.shade100, width: 1.0),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 45.0, color: Colors.deepPurple.shade600),
-            const SizedBox(height: 8.0),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 15.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple.shade900,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -1225,83 +1019,4 @@ class _GirisEkranSayfasiState extends State<GirisEkranSayfasi> {
       ),
     );
   } */
-
-  Widget _buildGridButtonWithBadge(BuildContext context, String title,
-      IconData icon, Widget page, int badgeCount, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: () {
-        onTap();
-        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
-      },
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.white, Colors.grey.shade100],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.deepPurple.withOpacity(0.1),
-                  spreadRadius: 2,
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
-              border: Border.all(color: Colors.deepPurple.shade100, width: 1.0),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, size: 45.0, color: Colors.deepPurple.shade600),
-                const SizedBox(height: 8.0),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(
-                    title,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple.shade900,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (badgeCount > 0)
-            Positioned(
-              right: 8,
-              top: 8,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.red.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                    ),
-                  ],
-                ),
-                child: Text(
-                  badgeCount > 99 ? '99+' : badgeCount.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }

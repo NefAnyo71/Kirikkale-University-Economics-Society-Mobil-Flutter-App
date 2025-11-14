@@ -366,4 +366,4 @@ class _UyeKayitState extends State<UyeKayit> {
       ),
     );
   }
-}
+} 
