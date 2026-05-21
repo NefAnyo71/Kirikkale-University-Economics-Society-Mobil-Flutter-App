@@ -444,9 +444,6 @@ This project is licensed under the MIT license. See the `LICENSE` file for detai
 
 > **Note**: You may notice design differences in some pages of the application. This is because I haven't updated some pages from the old version of the application yet. I plan to completely redesign the entire application from scratch in the future.
 
-## 🔐 Authentication Notes
-
-> **Important**: We are currently experiencing issues with packages like Google Sign-In. Account creation is currently local only. We are working on resolving these authentication issues.
 
 ---
 
